@@ -139,3 +139,71 @@ def stream_audio(filename, as_attachment=False):
     )
 
     return response
+
+
+def upload_cover(file_object, filename):
+    import mimetypes
+
+    if not filename or os.path.basename(filename) != filename:
+        raise ValueError("Invalid cover filename.")
+
+    content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+    filebase_client().upload_fileobj(
+        file_object,
+        os.environ["FILEBASE_BUCKET"],
+        f"covers/{filename}",
+        ExtraArgs={"ContentType": content_type},
+    )
+
+
+def delete_cover(filename):
+    if not filebase_enabled():
+        return
+
+    if not filename or os.path.basename(filename) != filename:
+        raise ValueError("Invalid cover filename.")
+
+    filebase_client().delete_object(
+        Bucket=os.environ["FILEBASE_BUCKET"],
+        Key=f"covers/{filename}",
+    )
+
+
+def stream_cover(filename):
+    import mimetypes
+
+    if not filename or os.path.basename(filename) != filename:
+        abort(404)
+
+    client = filebase_client()
+    bucket = os.environ["FILEBASE_BUCKET"]
+    key = f"covers/{filename}"
+
+    try:
+        info = client.head_object(Bucket=bucket, Key=key)
+        result = client.get_object(Bucket=bucket, Key=key)
+    except Exception:
+        abort(404)
+
+    body = result["Body"]
+
+    def generate():
+        try:
+            for chunk in body.iter_chunks(chunk_size=64 * 1024):
+                if chunk:
+                    yield chunk
+        finally:
+            body.close()
+
+    response = Response(
+        stream_with_context(generate()),
+        content_type=info.get("ContentType")
+        or mimetypes.guess_type(filename)[0]
+        or "application/octet-stream",
+        direct_passthrough=True,
+    )
+    response.headers["Content-Length"] = str(info["ContentLength"])
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    response.headers["Content-Disposition"] = f'inline; filename="{filename}"'
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response

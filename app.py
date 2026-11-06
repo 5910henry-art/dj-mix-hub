@@ -16,7 +16,7 @@ from flask_login import (
 from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash, generate_password_hash
-from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename, safe_join
 
 from config import Config
 from extensions import db
@@ -322,6 +322,22 @@ def create_app():
 
     @app.route("/uploads/<path:filename>")
     def uploaded_file(filename):
+        from models import Mix
+        from audio_storage import filebase_enabled, stream_cover
+
+        local_path = safe_join(app.config["UPLOAD_FOLDER"], filename)
+        if local_path and os.path.isfile(local_path):
+            return send_from_directory(
+                app.config["UPLOAD_FOLDER"], filename
+            )
+
+        # Only database-linked mix covers may be read from Filebase.
+        if (
+            Mix.query.filter_by(cover_image=filename).first()
+            and filebase_enabled()
+        ):
+            return stream_cover(filename)
+
         return send_from_directory(
             app.config["UPLOAD_FOLDER"], filename
         )
@@ -854,9 +870,11 @@ def create_app():
             )
 
             from audio_storage import (
-                filebase_enabled, upload_audio, delete_audio
+                filebase_enabled, upload_audio, delete_audio,
+                upload_cover, delete_cover
             )
             audio_uploaded_remote = False
+            cover_uploaded_remote = False
 
             try:
                 if filebase_enabled():
@@ -866,7 +884,11 @@ def create_app():
                     audio.save(audio_path)
 
                 if cover_path:
-                    cover.save(cover_path)
+                    if filebase_enabled():
+                        upload_cover(cover, cover_filename)
+                        cover_uploaded_remote = True
+                    else:
+                        cover.save(cover_path)
 
                 mix = Mix(
                     title=title,
@@ -894,6 +916,14 @@ def create_app():
                         app.logger.exception(
                             "Could not clean up Filebase audio"
                         )
+                if cover_uploaded_remote:
+                    try:
+                        delete_cover(cover_filename)
+                    except Exception:
+                        app.logger.exception(
+                            "Could not clean up Filebase cover"
+                        )
+
                 for saved_path in (audio_path, cover_path):
                     if saved_path and os.path.exists(saved_path):
                         os.remove(saved_path)
@@ -1073,7 +1103,7 @@ def create_app():
             id=mix_id, dj_id=current_user.id
         ).first_or_404()
 
-        from audio_storage import filebase_enabled, delete_audio
+        from audio_storage import filebase_enabled, delete_audio, delete_cover
 
         audio_filename = mix.audio_file
         cover_filename = mix.cover_image
@@ -1141,9 +1171,24 @@ def create_app():
             else:
                 remove_local_file(audio_filename)
 
-        # Cover images remain stored locally.
-        if cover_filename:
-            remove_local_file(cover_filename)
+        # Prefer deleting a legacy local cover; new covers are in Filebase.
+        if cover_filename and not still_used(cover_filename):
+            local_cover_path = os.path.join(
+                app.config["UPLOAD_FOLDER"],
+                os.path.basename(cover_filename)
+            )
+            if os.path.isfile(local_cover_path):
+                remove_local_file(cover_filename)
+            elif filebase_enabled():
+                try:
+                    delete_cover(cover_filename)
+                except Exception:
+                    app.logger.exception(
+                        "Could not delete Filebase cover: %s",
+                        cover_filename
+                    )
+            else:
+                remove_local_file(cover_filename)
 
         flash("Your mix has been deleted.")
         return redirect(url_for("dj_dashboard"))
@@ -1502,9 +1547,11 @@ def create_app():
             )
 
             from audio_storage import (
-                filebase_enabled, upload_audio, delete_audio
+                filebase_enabled, upload_audio, delete_audio,
+                upload_cover, delete_cover
             )
             audio_uploaded_remote = False
+            cover_uploaded_remote = False
 
             try:
                 if filebase_enabled():
@@ -1514,7 +1561,11 @@ def create_app():
                     audio.save(audio_path)
 
                 if cover_path:
-                    cover.save(cover_path)
+                    if filebase_enabled():
+                        upload_cover(cover, cover_filename)
+                        cover_uploaded_remote = True
+                    else:
+                        cover.save(cover_path)
 
                 mix = Mix(
                     title=title,
@@ -1541,6 +1592,14 @@ def create_app():
                     except Exception:
                         app.logger.exception(
                             "Could not clean up Filebase audio"
+                        )
+
+                if cover_uploaded_remote:
+                    try:
+                        delete_cover(cover_filename)
+                    except Exception:
+                        app.logger.exception(
+                            "Could not clean up Filebase cover"
                         )
 
                 for saved_path in (audio_path, cover_path):
@@ -1670,7 +1729,7 @@ def create_app():
         if not mix:
             abort(404)
 
-        from audio_storage import filebase_enabled, delete_audio
+        from audio_storage import filebase_enabled, delete_audio, delete_cover
 
         audio_filename = mix.audio_file
         cover_filename = mix.cover_image
@@ -1738,9 +1797,24 @@ def create_app():
             else:
                 remove_local_file(audio_filename)
 
-        # Cover images remain stored locally.
-        if cover_filename:
-            remove_local_file(cover_filename)
+        # Prefer deleting a legacy local cover; new covers are in Filebase.
+        if cover_filename and not still_used(cover_filename):
+            local_cover_path = os.path.join(
+                app.config["UPLOAD_FOLDER"],
+                os.path.basename(cover_filename)
+            )
+            if os.path.isfile(local_cover_path):
+                remove_local_file(cover_filename)
+            elif filebase_enabled():
+                try:
+                    delete_cover(cover_filename)
+                except Exception:
+                    app.logger.exception(
+                        "Could not delete Filebase cover: %s",
+                        cover_filename
+                    )
+            else:
+                remove_local_file(cover_filename)
 
         flash("Mix deleted successfully.")
         return redirect(url_for("admin_manage_mixes"))
