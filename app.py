@@ -474,6 +474,7 @@ def create_app():
     @app.route("/mix/<int:mix_id>/stream")
     def stream_mix(mix_id):
         from models import Mix, MixEvent
+        from audio_storage import filebase_enabled, stream_audio
 
         mix = Mix.query.filter_by(
             id=mix_id, is_published=True
@@ -486,15 +487,20 @@ def create_app():
         ))
         db.session.commit()
 
+        if filebase_enabled():
+            return stream_audio(mix.audio_file)
+
         return send_from_directory(
             app.config["UPLOAD_FOLDER"],
             mix.audio_file,
             conditional=True
         )
 
+
     @app.route("/mix/<int:mix_id>/download")
     def download_mix(mix_id):
         from models import Mix, MixEvent
+        from audio_storage import filebase_enabled, stream_audio
 
         mix = Mix.query.filter_by(
             id=mix_id, is_published=True
@@ -506,6 +512,9 @@ def create_app():
             event_type="download"
         ))
         db.session.commit()
+
+        if filebase_enabled():
+            return stream_audio(mix.audio_file, as_attachment=True)
 
         return send_from_directory(
             app.config["UPLOAD_FOLDER"],
@@ -844,8 +853,18 @@ def create_app():
                 if cover_filename else None
             )
 
+            from audio_storage import (
+                filebase_enabled, upload_audio, delete_audio
+            )
+            audio_uploaded_remote = False
+
             try:
-                audio.save(audio_path)
+                if filebase_enabled():
+                    upload_audio(audio, audio_filename)
+                    audio_uploaded_remote = True
+                else:
+                    audio.save(audio_path)
+
                 if cover_path:
                     cover.save(cover_path)
 
@@ -867,6 +886,14 @@ def create_app():
 
             except Exception:
                 db.session.rollback()
+
+                if audio_uploaded_remote:
+                    try:
+                        delete_audio(audio_filename)
+                    except Exception:
+                        app.logger.exception(
+                            "Could not clean up Filebase audio"
+                        )
                 for saved_path in (audio_path, cover_path):
                     if saved_path and os.path.exists(saved_path):
                         os.remove(saved_path)
@@ -1040,48 +1067,83 @@ def create_app():
     @app.route("/dj/mixes/<int:mix_id>/delete", methods=["POST"])
     @dj_required
     def dj_delete_mix(mix_id):
-        from models import Mix
+        from models import Mix, MixEvent
 
         mix = Mix.query.filter_by(
             id=mix_id, dj_id=current_user.id
         ).first_or_404()
 
-        filenames = [mix.audio_file, mix.cover_image]
+        from audio_storage import filebase_enabled, delete_audio
+
+        audio_filename = mix.audio_file
+        cover_filename = mix.cover_image
 
         try:
+            MixEvent.query.filter_by(
+                mix_id=mix.id
+            ).delete(synchronize_session=False)
+
+            db.session.expire(mix, ["analytics_events"])
             db.session.delete(mix)
             db.session.commit()
         except Exception:
             db.session.rollback()
-            app.logger.exception("DJ mix deletion failed")
-            flash("Could not delete your mix.")
+            app.logger.exception("Mix deletion failed")
+            flash("Could not delete the mix.")
             return redirect(url_for("dj_dashboard"))
 
-        for filename in filenames:
-            if not filename:
-                continue
-
-            still_used = Mix.query.filter(
+        def still_used(filename):
+            return Mix.query.filter(
                 or_(
                     Mix.audio_file == filename,
                     Mix.cover_image == filename
                 )
-            ).first()
+            ).first() is not None
 
-            if still_used:
-                continue
+        def remove_local_file(filename):
+            if not filename or still_used(filename):
+                return
 
-            upload_folder = os.path.realpath(app.config["UPLOAD_FOLDER"])
+            upload_folder = os.path.realpath(
+                app.config["UPLOAD_FOLDER"]
+            )
             file_path = os.path.realpath(
-                os.path.join(upload_folder, os.path.basename(filename))
+                os.path.join(
+                    upload_folder,
+                    os.path.basename(filename)
+                )
             )
 
-            if os.path.commonpath([upload_folder, file_path]) == upload_folder:
-                if os.path.isfile(file_path):
-                    try:
-                        os.remove(file_path)
-                    except OSError:
-                        app.logger.exception("Could not remove DJ mix file")
+            if os.path.commonpath(
+                [upload_folder, file_path]
+            ) != upload_folder:
+                return
+
+            if os.path.isfile(file_path):
+                try:
+                    os.remove(file_path)
+                except OSError:
+                    app.logger.exception(
+                        "Could not remove uploaded file: %s",
+                        filename
+                    )
+
+        # Remove the MP3 from its actual storage location.
+        if audio_filename and not still_used(audio_filename):
+            if filebase_enabled():
+                try:
+                    delete_audio(audio_filename)
+                except Exception:
+                    app.logger.exception(
+                        "Could not delete Filebase audio: %s",
+                        audio_filename
+                    )
+            else:
+                remove_local_file(audio_filename)
+
+        # Cover images remain stored locally.
+        if cover_filename:
+            remove_local_file(cover_filename)
 
         flash("Your mix has been deleted.")
         return redirect(url_for("dj_dashboard"))
@@ -1439,8 +1501,18 @@ def create_app():
                 if cover_filename else None
             )
 
+            from audio_storage import (
+                filebase_enabled, upload_audio, delete_audio
+            )
+            audio_uploaded_remote = False
+
             try:
-                audio.save(audio_path)
+                if filebase_enabled():
+                    upload_audio(audio, audio_filename)
+                    audio_uploaded_remote = True
+                else:
+                    audio.save(audio_path)
+
                 if cover_path:
                     cover.save(cover_path)
 
@@ -1462,6 +1534,14 @@ def create_app():
 
             except Exception:
                 db.session.rollback()
+
+                if audio_uploaded_remote:
+                    try:
+                        delete_audio(audio_filename)
+                    except Exception:
+                        app.logger.exception(
+                            "Could not clean up Filebase audio"
+                        )
 
                 for saved_path in (audio_path, cover_path):
                     if saved_path and os.path.exists(saved_path):
@@ -1584,15 +1664,23 @@ def create_app():
     @app.route("/admin/mixes/<int:mix_id>/delete", methods=["POST"])
     @admin_required
     def admin_delete_mix(mix_id):
-        from models import Mix
+        from models import Mix, MixEvent
 
         mix = db.session.get(Mix, mix_id)
         if not mix:
             abort(404)
 
-        filenames = [mix.audio_file, mix.cover_image]
+        from audio_storage import filebase_enabled, delete_audio
+
+        audio_filename = mix.audio_file
+        cover_filename = mix.cover_image
 
         try:
+            MixEvent.query.filter_by(
+                mix_id=mix.id
+            ).delete(synchronize_session=False)
+
+            db.session.expire(mix, ["analytics_events"])
             db.session.delete(mix)
             db.session.commit()
         except Exception:
@@ -1601,32 +1689,58 @@ def create_app():
             flash("Could not delete the mix.")
             return redirect(url_for("admin_manage_mixes"))
 
-        for filename in filenames:
-            if not filename:
-                continue
-
-            # Do not remove a file still used by another mix.
-            still_used = Mix.query.filter(
+        def still_used(filename):
+            return Mix.query.filter(
                 or_(
                     Mix.audio_file == filename,
                     Mix.cover_image == filename
                 )
-            ).first()
+            ).first() is not None
 
-            if still_used:
-                continue
+        def remove_local_file(filename):
+            if not filename or still_used(filename):
+                return
 
-            upload_folder = os.path.realpath(app.config["UPLOAD_FOLDER"])
+            upload_folder = os.path.realpath(
+                app.config["UPLOAD_FOLDER"]
+            )
             file_path = os.path.realpath(
-                os.path.join(upload_folder, os.path.basename(filename))
+                os.path.join(
+                    upload_folder,
+                    os.path.basename(filename)
+                )
             )
 
-            if os.path.commonpath([upload_folder, file_path]) == upload_folder:
-                if os.path.isfile(file_path):
-                    try:
-                        os.remove(file_path)
-                    except OSError:
-                        app.logger.exception("Could not remove uploaded file")
+            if os.path.commonpath(
+                [upload_folder, file_path]
+            ) != upload_folder:
+                return
+
+            if os.path.isfile(file_path):
+                try:
+                    os.remove(file_path)
+                except OSError:
+                    app.logger.exception(
+                        "Could not remove uploaded file: %s",
+                        filename
+                    )
+
+        # Remove the MP3 from its actual storage location.
+        if audio_filename and not still_used(audio_filename):
+            if filebase_enabled():
+                try:
+                    delete_audio(audio_filename)
+                except Exception:
+                    app.logger.exception(
+                        "Could not delete Filebase audio: %s",
+                        audio_filename
+                    )
+            else:
+                remove_local_file(audio_filename)
+
+        # Cover images remain stored locally.
+        if cover_filename:
+            remove_local_file(cover_filename)
 
         flash("Mix deleted successfully.")
         return redirect(url_for("admin_manage_mixes"))

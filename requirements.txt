@@ -5,3 +5,4 @@ python-dotenv
 gunicorn
 psycopg
 Flask-WTF
+boto3

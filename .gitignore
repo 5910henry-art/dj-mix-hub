@@ -15,3 +15,4 @@ uploads/
 *.db
 .DS_Store
 create_admin.py
+migrate_audio_to_filebase.py
