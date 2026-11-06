@@ -1,8 +1,8 @@
 
-const CACHE_NAME = "dj-mix-hub-pwa-v1";
+const CACHE_NAME = "dj-mix-hub-pwa-v2";
 
 const APP_ASSETS = [
-    "/offline.html",
+    "/static/offline.html",
     "/static/css/style.css",
     "/static/manifest.json",
     "/static/pwa/icon-192.png",
@@ -41,7 +41,7 @@ self.addEventListener("fetch", event => {
     if (request.mode === "navigate") {
         event.respondWith(
             fetch(request).catch(async () => {
-                return await caches.match("/offline.html");
+                return await caches.match("/static/offline.html");
             })
         );
         return;
