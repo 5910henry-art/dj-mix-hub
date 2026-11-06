@@ -12,14 +12,65 @@ input,textarea,select{width:100%;padding:13px;border:1px solid #39334f;border-ra
 textarea{min-height:100px}.hint{color:#aaa6bd;font-size:13px}
 button{width:100%;padding:14px;margin-top:22px;border:0;border-radius:9px;background:linear-gradient(100deg,#793cff,#d33bba);color:white;font-weight:bold}
 a{color:#c4a4ff;text-decoration:none}.message{color:#ffaaaa}
+
+    .upload-progress {
+        margin-top: 22px;
+        padding: 16px;
+        background: #0d0c18;
+        border: 1px solid #39334f;
+        border-radius: 10px;
+    }
+    .upload-progress[hidden] { display: none; }
+    .upload-progress-track {
+        width: 100%;
+        height: 13px;
+        margin: 12px 0;
+        overflow: hidden;
+        background: #302a45;
+        border-radius: 20px;
+    }
+    .upload-progress-bar {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, #793cff, #d33bba);
+        border-radius: 20px;
+        transition: width .2s ease;
+    }
+    .upload-progress-info {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        color: #c4a4ff;
+        font-size: 14px;
+    }
+    #uploadStatus {
+        margin-bottom: 0;
+        color: #aaa6bd;
+        font-size: 13px;
+    }
+    button:disabled { opacity: .65; cursor: not-allowed; }
+
 </style>
 </head>
 <body><div class="container">
 <h1>🎧 Upload Your Mix</h1>
 <p>Upload your mix, then publish or unpublish it whenever you choose from your dashboard.</p>
 {% with messages=get_flashed_messages() %}{% for message in messages %}<p class="message">{{ message }}</p>{% endfor %}{% endwith %}
-<form method="POST" enctype="multipart/form-data">
-<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<form method="POST" enctype="multipart/form-data" data-upload-progress>
+
+          <div id="uploadProgress" class="upload-progress"
+               hidden aria-live="polite">
+              <div class="upload-progress-info">
+                  <strong id="uploadStatus">Preparing upload…</strong>
+                  <strong id="uploadPercent">0%</strong>
+              </div>
+              <div class="upload-progress-track">
+                  <div id="uploadProgressBar" class="upload-progress-bar"></div>
+              </div>
+              <p id="uploadDetails">Waiting to upload files…</p>
+          </div>
+
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <label>Mix title *</label><input name="title" maxlength="180" required>
 <label>Description</label><textarea name="description"></textarea>
 <label>Genre</label><select name="genre_id"><option value="">Choose genre</option>{% for genre in genres %}<option value="{{ genre.id }}">{{ genre.name }}</option>{% endfor %}</select>
@@ -29,4 +80,7 @@ a{color:#c4a4ff;text-decoration:none}.message{color:#ffaaaa}
 <button type="submit">Upload My Mix</button>
 </form>
 <p><a href="{{ url_for('dj_dashboard') }}">← Back to DJ Dashboard</a></p>
-</div></body></html>
+</div>
+<script src="{{ url_for('static', filename='js/upload-progress.js') }}" defer></script>
+
+</body></html>
