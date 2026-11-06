@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edit My DJ Profile | DJ MIX HUB</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:#0b0a15;color:white;font-family:Arial,sans-serif}
+main{max-width:700px;margin:25px auto;background:#171526;padding:25px;border-radius:14px}
+label{display:block;margin:18px 0 7px;color:#c4a4ff}
+input,textarea{width:100%;padding:13px;border:1px solid #51416d;border-radius:8px;background:#0e0d19;color:white}
+textarea{min-height:120px}
+button{width:100%;padding:14px;margin-top:22px;border:0;border-radius:8px;background:#7545c5;color:white;font-weight:bold}
+a{color:#c4a4ff;text-decoration:none}
+img{width:120px;height:120px;object-fit:cover;border-radius:50%}
+.hint{color:#aaa6bd;font-size:13px}
+</style>
+</head>
+<body>
+<main>
+<h1>🎧 Edit My DJ Profile</h1>
+<p class="hint">Update your public DJ identity and social media links.</p>
+{% with messages=get_flashed_messages() %}{% for message in messages %}<p>{{ message }}</p>{% endfor %}{% endwith %}
+<form method="POST" enctype="multipart/form-data">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Profile photo</label>
+{% if dj.profile_image %}<img src="{{ url_for('uploaded_file', filename=dj.profile_image) }}" alt="Profile photo">{% endif %}
+<input type="file" name="profile_image" accept=".jpg,.jpeg,.png,.webp">
+<label>DJ display name</label>
+<input name="display_name" maxlength="120" value="{{ dj.display_name or '' }}" required>
+<label>Biography</label>
+<textarea name="bio">{{ dj.bio or '' }}</textarea>
+<label>YouTube</label><input type="url" name="youtube_url" maxlength="500" value="{{ dj.youtube_url or '' }}">
+<label>Instagram</label><input type="url" name="instagram_url" maxlength="500" value="{{ dj.instagram_url or '' }}">
+<label>TikTok</label><input type="url" name="tiktok_url" maxlength="500" value="{{ dj.tiktok_url or '' }}">
+<label>Facebook</label><input type="url" name="facebook_url" maxlength="500" value="{{ dj.facebook_url or '' }}">
+<p class="hint">Your login username, email and password are not changed here.</p>
+<button type="submit">Save My Profile</button>
+</form>
+<p><a href="{{ url_for('dj_dashboard') }}">← Back to DJ Dashboard</a></p>
+</main>
+</body>
+</html>

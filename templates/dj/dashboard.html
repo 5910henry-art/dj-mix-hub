@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#100d1c">
+<title>My DJ Dashboard | DJ MIX HUB</title>
+<style>
+:root {
+    --bg:#0c0a15;
+    --panel:#171326;
+    --panel2:#1d1830;
+    --border:#302844;
+    --purple:#a879f5;
+    --purple2:#7545c5;
+    --text:#f7f3ff;
+    --muted:#a8a0ba;
+    --green:#58d6a0;
+    --orange:#ffbd70;
+    --red:#ff858d;
+}
+*{box-sizing:border-box}
+body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:Inter,Arial,sans-serif;min-height:100vh
+}
+a{color:inherit;text-decoration:none}
+button{font:inherit}
+.layout{display:flex;min-height:100vh}
+.sidebar{
+    width:250px;flex-shrink:0;background:#100d1c;
+    border-right:1px solid var(--border);padding:25px 17px;
+    display:flex;flex-direction:column;position:sticky;top:0;
+    height:100vh
+}
+.brand{padding:5px 12px 30px}
+.brand-logo{font-size:23px;font-weight:900;letter-spacing:-1px}
+.brand-logo span{color:var(--purple)}
+.brand small{display:block;color:var(--muted);font-size:11px;margin-top:7px;letter-spacing:2px}
+.nav-label{color:#817890;font-size:10px;font-weight:800;letter-spacing:1.8px;padding:12px}
+.nav{display:grid;gap:7px}
+.nav a{
+    padding:12px;border-radius:10px;color:#c8bfd8;
+    font-size:13px;font-weight:600;transition:.2s
+}
+.nav a:hover,.nav a.active{background:#29203d;color:white}
+.nav a.active{border:1px solid #49366a}
+.nav-icon{display:inline-block;width:25px;color:var(--purple)}
+.sidebar-bottom{margin-top:auto;padding:15px 10px 0;border-top:1px solid var(--border)}
+.user-mini{display:flex;align-items:center;gap:11px}
+.avatar{
+    width:39px;height:39px;border-radius:12px;background:#35264f;
+    display:grid;place-items:center;font-size:18px
+}
+.user-mini strong{display:block;font-size:12px}
+.user-mini small{color:var(--muted);font-size:11px}
+.main-area{flex:1;min-width:0}
+.topbar{
+    height:76px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 35px;background:rgba(16,13,28,.8)
+}
+.topbar strong{font-size:14px}
+.topbar small{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+.top-actions{display:flex;align-items:center;gap:17px}
+.top-actions>a{font-size:12px;color:#c9b3f4}
+.logout{
+    border:1px solid #593044;background:#2b1728;color:#ff9ca7;
+    padding:9px 14px;border-radius:9px;cursor:pointer;font-size:12px
+}
+main{max-width:1450px;margin:auto;padding:32px 35px 55px}
+.welcome{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:20px;padding:27px 29px;border:1px solid #44315f;
+    border-radius:18px;
+    background:radial-gradient(ellipse at 85% 20%,#51317a 0,transparent 45%),
+               linear-gradient(120deg,#241936,#171326 75%);
+    margin-bottom:27px
+}
+.eyebrow{font-size:10px;letter-spacing:2px;color:#c7a9fa;font-weight:800}
+.welcome h1{font-size:29px;margin:9px 0 7px;letter-spacing:-1px}
+.welcome p:last-child{margin:0;color:#c1b6d1;font-size:13px}
+.welcome-icon{
+    width:65px;height:65px;border-radius:19px;background:#ffffff12;
+    border:1px solid #ffffff22;display:grid;place-items:center;font-size:31px
+}
+.section-heading{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:12px;margin:30px 0 15px
+}
+.section-heading h2{font-size:17px;margin:0}
+.section-heading small{font-size:11px;color:var(--muted)}
+.stats{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px
+}
+.stat-card{
+    background:linear-gradient(145deg,#1d1830,#151222);
+    border:1px solid var(--border);border-radius:15px;padding:19px;
+    min-width:0;transition:transform .2s,border-color .2s
+}
+.stat-card:hover{transform:translateY(-3px);border-color:#70529c}
+.stat-top{display:flex;align-items:center;justify-content:space-between}
+.stat-icon{
+    width:37px;height:37px;border-radius:11px;
+    display:grid;place-items:center;background:#35264f;font-size:17px
+}
+.stat-value{font-size:27px;font-weight:850;margin:17px 0 5px;letter-spacing:-1px}
+.stat-label{font-size:11px;color:var(--muted)}
+.stat-note{font-size:10px;color:#8c829f;margin-top:8px}
+.purple{color:#c6a6ff}.green{color:var(--green)}.orange{color:var(--orange)}
+.actions{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px
+}
+.action{
+    display:flex;align-items:center;gap:13px;padding:16px;
+    border:1px solid var(--border);border-radius:13px;
+    background:var(--panel);transition:.2s;min-width:0
+}
+.action:hover{background:var(--panel2);border-color:#72539e;transform:translateY(-2px)}
+.action-icon{
+    width:42px;height:42px;flex-shrink:0;border-radius:12px;
+    background:#35264f;display:grid;place-items:center;font-size:19px
+}
+.action strong{display:block;font-size:12px}
+.action small{display:block;color:var(--muted);font-size:10px;margin-top:5px}
+.mix-panel{
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:16px;overflow:hidden
+}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:700px}
+th{
+    text-align:left;padding:15px 17px;color:#a99dbd;
+    background:#1d1830;font-size:10px;text-transform:uppercase;
+    letter-spacing:1px
+}
+td{padding:15px 17px;border-top:1px solid #2b243b;font-size:12px;color:#e5deef}
+tbody tr:hover{background:#ffffff06}
+.mix-title{font-weight:700;color:white}
+.genre{color:var(--muted)}
+.status{
+    display:inline-block;padding:5px 9px;border-radius:20px;
+    font-size:10px;font-weight:700
+}
+.status.published{background:#153b30;color:#6ce0ae}
+.status.draft{background:#3a2c1b;color:#ffc77e}
+.manage{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.manage a{color:#c6a6ff;font-weight:700}
+.inline-form{display:inline}
+.small-btn{
+    border:0;background:transparent;color:#c6a6ff;
+    padding:3px;cursor:pointer;font-size:11px;font-weight:700
+}
+.small-btn.delete{color:#ff929a}
+.small-btn:hover{text-decoration:underline}
+.empty{
+    padding:40px 20px;text-align:center;color:var(--muted)
+}
+.empty-icon{font-size:35px;margin-bottom:12px}
+.empty strong{display:block;color:white;margin-bottom:7px}
+.empty a{display:inline-block;margin-top:16px;background:var(--purple2);
+    color:white;padding:11px 17px;border-radius:9px;font-size:12px}
+.footer-note{text-align:center;color:#766d86;font-size:10px;margin-top:28px}
+@media(max-width:1050px){
+    .sidebar{width:220px}
+    main{padding:25px 22px 45px}
+    .topbar{padding:0 22px}
+    .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+    .layout{display:block}
+    .sidebar{position:static;width:100%;height:auto;padding:13px 14px;
+        border-right:0;border-bottom:1px solid var(--border)}
+    .brand{padding:5px 7px 12px}
+    .brand-logo{font-size:20px}
+    .brand small{font-size:9px;margin-top:3px}
+    .nav-label,.sidebar-bottom{display:none}
+    .nav{display:flex;overflow-x:auto;gap:7px;padding-bottom:3px}
+    .nav a{white-space:nowrap;padding:10px 11px;font-size:11px;
+        background:#1a1527}
+    .nav-icon{width:auto;margin-right:5px}
+    .topbar{height:62px;padding:0 16px}
+    .topbar small{font-size:10px}
+    .top-actions{gap:10px}
+    .top-actions>a{font-size:10px}
+    .logout{padding:8px 10px;font-size:10px}
+    main{padding:20px 14px 35px}
+    .welcome{padding:21px 18px;border-radius:14px}
+    .welcome h1{font-size:23px}
+    .welcome-icon{width:50px;height:50px;font-size:24px}
+    .stats{gap:9px}
+    .stat-card{padding:14px;border-radius:12px}
+    .stat-value{font-size:23px;margin-top:13px}
+    .stat-icon{width:32px;height:32px;font-size:15px}
+    .actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .action{padding:12px;gap:9px}
+    .action-icon{width:34px;height:34px;font-size:16px}
+    .action strong{font-size:11px}
+    .action small{font-size:9px}
+    .section-heading{margin-top:25px}
+}
+@media(max-width:390px){
+    .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .actions{grid-template-columns:1fr}
+    .welcome-icon{display:none}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-logo">🎧 DJ MIX <span>HUB</span></div>
+            <small>DJ CREATOR STUDIO</small>
+        </div>
+
+        <div class="nav-label">MY WORKSPACE</div>
+        <nav class="nav">
+            <a class="active" href="{{ url_for('dj_dashboard') }}"><span class="nav-icon">▦</span>Dashboard</a>
+            <a href="{{ url_for('dj_upload_mix') }}"><span class="nav-icon">＋</span>Upload a Mix</a>
+            <a href="{{ url_for('dj_manage_bookings') }}"><span class="nav-icon">▣</span>My Bookings</a>
+            <a href="{{ url_for('dj_booking_calendar') }}"><span class="nav-icon">▦</span>Booking Calendar</a>
+            <a href="{{ url_for('dj_edit_profile') }}"><span class="nav-icon">◉</span>My DJ Profile</a>
+            <a href="{{ url_for('public_dj_profile', dj_id=dj.id) }}" target="_blank"><span class="nav-icon">↗</span>Public Profile</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="user-mini">
+                <div class="avatar">🎧</div>
+                <div>
+                    <strong>{{ dj.display_name or dj.username }}</strong>
+                    <small>DJ Account</small>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-area">
+        <header class="topbar">
+            <div>
+                <strong>DJ Creator Studio</strong>
+                <small>Manage your music and bookings</small>
+            </div>
+            <div class="top-actions">
+                <a href="/" target="_blank">↗ Visit Website</a>
+                <form method="POST" action="{{ url_for('dj_logout') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="logout" type="submit">Logout ↗</button>
+                </form>
+            </div>
+        </header>
+
+        <main>
+            <section class="welcome">
+                <div>
+                    <p class="eyebrow">YOUR DJ WORKSPACE</p>
+                    <h1>Welcome back, {{ dj.display_name or dj.username }} 👋</h1>
+                    <p>Your music, audience and bookings — all in one place.</p>
+                </div>
+                <div class="welcome-icon">🎧</div>
+            </section>
+
+            <div class="section-heading">
+                <h2>Your Performance</h2>
+                <small>Overview of your DJ account</small>
+            </div>
+
+            <section class="stats">
+                <div class="stat-card">
+                    <div class="stat-top"><span class="stat-icon">🎵</span></div>
+                    <div class="stat-value purple">{{ stats.total }}</div>
+                    <div class="stat-label">Total Mixes</div>
+                    <div class="stat-note">Your uploaded mixes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-top"><span class="stat-icon">🌟</span></div>
+                    <div class="stat-value green">{{ stats.published }}</div>
+                    <div class="stat-label">Published Mixes</div>
+                    <div class="stat-note">Available to listeners</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-top"><span class="stat-icon">▶️</span></div>
+                    <div class="stat-value purple">{{ stats.plays }}</div>
+                    <div class="stat-label">Total Plays</div>
+                    <div class="stat-note">Listening activity</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-top"><span class="stat-icon">⬇️</span></div>
+                    <div class="stat-value purple">{{ stats.downloads }}</div>
+                    <div class="stat-label">Downloads</div>
+                    <div class="stat-note">Mix downloads</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-top"><span class="stat-icon">📅</span></div>
+                    <div class="stat-value purple">{{ stats.bookings }}</div>
+                    <div class="stat-label">Total Bookings</div>
+                    <div class="stat-note">Assigned to you</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-top"><span class="stat-icon">⏳</span></div>
+                    <div class="stat-value orange">{{ stats.pending_bookings }}</div>
+                    <div class="stat-label">Pending Bookings</div>
+                    <div class="stat-note">Awaiting your response</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-top"><span class="stat-icon">✅</span></div>
+                    <div class="stat-value green">{{ stats.confirmed_bookings }}</div>
+                    <div class="stat-label">Confirmed Bookings</div>
+                    <div class="stat-note">Your confirmed events</div>
+                </div>
+            </section>
+
+            <div class="section-heading">
+                <h2>Quick Actions</h2>
+                <small>Shortcuts to your tools</small>
+            </div>
+
+            <section class="actions">
+                <a class="action" href="{{ url_for('dj_upload_mix') }}">
+                    <span class="action-icon">＋</span>
+                    <span><strong>Upload a Mix</strong><small>Add new music to your page</small></span>
+                </a>
+                <a class="action" href="{{ url_for('dj_manage_bookings') }}">
+                    <span class="action-icon">📅</span>
+                    <span><strong>Manage Bookings</strong><small>View and respond to events</small></span>
+                </a>
+                <a class="action" href="{{ url_for('dj_booking_calendar') }}">
+                    <span class="action-icon">🗓️</span>
+                    <span><strong>My Calendar</strong><small>See your scheduled events</small></span>
+                </a>
+                <a class="action" href="{{ url_for('dj_edit_profile') }}">
+                    <span class="action-icon">👤</span>
+                    <span><strong>Edit My Profile</strong><small>Update your DJ information</small></span>
+                </a>
+                <a class="action" href="{{ url_for('public_dj_profile', dj_id=dj.id) }}" target="_blank">
+                    <span class="action-icon">🌐</span>
+                    <span><strong>Public Profile</strong><small>See how clients view you</small></span>
+                </a>
+                <a class="action" href="/">
+                    <span class="action-icon">🏠</span>
+                    <span><strong>Visit DJ MIX HUB</strong><small>Explore the website</small></span>
+                </a>
+            </section>
+
+            <div class="section-heading">
+                <h2>Your Mixes</h2>
+                <small>{{ stats.total }} mix{% if stats.total != 1 %}es{% endif %} in your account</small>
+            </div>
+
+            <section class="mix-panel">
+                {% if mixes %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mix Details</th>
+                                <th>Genre</th>
+                                <th>Status</th>
+                                <th>Plays</th>
+                                <th>Downloads</th>
+                                <th>Manage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for mix in mixes %}
+                            <tr>
+                                <td><span class="mix-title">{{ mix.title }}</span></td>
+                                <td class="genre">{{ mix.genre.name if mix.genre else '—' }}</td>
+                                <td>
+                                    {% if mix.is_published %}
+                                    <span class="status published">Published</span>
+                                    {% else %}
+                                    <span class="status draft">Draft</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ mix.plays }}</td>
+                                <td>{{ mix.downloads }}</td>
+                                <td>
+                                    <div class="manage">
+                                        <a href="{{ url_for('dj_edit_mix', mix_id=mix.id) }}">Edit</a>
+                                        <form class="inline-form" method="POST" action="{{ url_for('dj_toggle_mix', mix_id=mix.id) }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button class="small-btn" type="submit">{{ 'Unpublish' if mix.is_published else 'Publish' }}</button>
+                                        </form>
+                                        <form class="inline-form" method="POST" action="{{ url_for('dj_delete_mix', mix_id=mix.id) }}" onsubmit="return confirm('Permanently delete this mix?')">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button class="small-btn delete" type="submit">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty">
+                    <div class="empty-icon">🎵</div>
+                    <strong>Your DJ journey starts here</strong>
+                    <span>You haven't uploaded any mixes yet.</span><br>
+                    <a href="{{ url_for('dj_upload_mix') }}">＋ Upload Your First Mix</a>
+                </div>
+                {% endif %}
+            </section>
+
+            <div class="footer-note">DJ MIX HUB · Your sound. Your audience. Your stage.</div>
+        </main>
+    </div>
+</div>
+</body>
+</html>

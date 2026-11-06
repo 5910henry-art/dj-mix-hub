@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Campaign Manager | DJ MIX HUB</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0915;color:#f7f4ff;font-family:Arial,sans-serif}
+main{max-width:1200px;margin:auto;padding:28px 5% 55px}
+a{color:#c5a6ff;text-decoration:none}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+.top h1{margin:0;font-size:27px}
+.eyebrow{color:#b69aff;font-size:11px;letter-spacing:2px;font-weight:bold}
+.subtitle{color:#aaa5bd;line-height:1.6}
+.btn{display:inline-block;background:linear-gradient(110deg,#713cff,#bd43d4);color:white;padding:12px 17px;border-radius:9px;font-weight:bold}
+.back{padding:10px 14px;border:1px solid #39304d;border-radius:8px}
+.summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:25px 0}
+.metric,.campaign{background:linear-gradient(145deg,#1b172c,#12101e);border:1px solid #302943;border-radius:15px}
+.metric{padding:19px}
+.metric span{display:block;color:#aaa5bd;font-size:13px}
+.metric strong{display:block;font-size:27px;margin-top:10px}
+.campaign{padding:20px;margin:15px 0}
+.campaign-top{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap}
+.campaign h2{font-size:19px;margin:0 0 7px}
+.muted{color:#aaa5bd;font-size:13px;line-height:1.6}
+.status{display:inline-block;padding:7px 11px;border-radius:20px;font-size:11px;font-weight:bold;background:#183b2b;color:#83efb0}
+.inactive{background:#422a31;color:#ffabb5}
+.scheduled{background:#352d4e;color:#d0b7ff}
+.expired{background:#3c3430;color:#e8b99a}
+.banner{display:block;width:100%;max-width:450px;height:145px;object-fit:contain;background:#0b0915;border-radius:10px;margin:17px 0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}
+.stat{background:#100e1c;padding:14px;border-radius:10px;border:1px solid #29233b}
+.stat span{display:block;color:#aaa5bd;font-size:12px}
+.stat strong{display:block;font-size:21px;margin-top:7px}
+.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+button{padding:10px 13px;border:0;border-radius:8px;cursor:pointer;font-weight:bold}
+.toggle{background:#39304e;color:white}
+.delete{background:#572936;color:#ffc1c9}
+.destination{font-size:13px;overflow-wrap:anywhere}
+.flash{padding:12px 15px;background:#202b25;border:1px solid #345d43;border-radius:9px;color:#a5f0bd}
+.empty{text-align:center;padding:45px 20px;color:#aaa5bd}
+@media(max-width:650px){
+ main{padding:20px 4% 40px}
+ .summary{grid-template-columns:1fr}
+ .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .stat{padding:10px}
+ .stat strong{font-size:17px}
+ .campaign{padding:15px}
+}
+</style>
+</head>
+<body>
+<main>
+<div class="top">
+ <div>
+  <p class="eyebrow">DJ MIX HUB · REVENUE MANAGEMENT</p>
+  <h1>📢 Campaign Manager</h1>
+  <p class="subtitle">Manage sponsored banners and monitor advertiser engagement.</p>
+ </div>
+ <a class="back" href="{{ url_for('admin_dashboard') }}">← Dashboard</a>
+</div>
+
+<div style="margin:22px 0">
+ <a class="btn" href="{{ url_for('admin_create_ad') }}">＋ Create Campaign</a>
+</div>
+
+{% with messages = get_flashed_messages() %}
+{% for message in messages %}
+<div class="flash">{{ message }}</div>
+{% endfor %}
+{% endwith %}
+
+{% set total_impressions = ads|sum(attribute='impressions') %}
+{% set total_clicks = ads|sum(attribute='clicks') %}
+{% set active_count = ads|selectattr('is_active')|list|length %}
+
+<div class="summary">
+ <div class="metric"><span>Total campaigns</span><strong>{{ ads|length }}</strong></div>
+ <div class="metric"><span>Total banner impressions</span><strong>{{ "{:,}".format(total_impressions) }}</strong></div>
+ <div class="metric"><span>Total advertiser clicks</span><strong>{{ "{:,}".format(total_clicks) }}</strong></div>
+</div>
+
+<div class="top">
+ <h2>All campaigns</h2>
+ <span class="muted">{{ active_count }} active campaign(s)</span>
+</div>
+
+{% if ads %}
+{% for ad in ads %}
+{% set ctr = (ad.clicks / ad.impressions * 100) if ad.impressions else 0 %}
+{% set campaign_status = 'Inactive' if not ad.is_active else ('Scheduled' if ad.start_date and ad.start_date > today else ('Expired' if ad.end_date and ad.end_date < today else 'Active')) %}
+<article class="campaign">
+ <div class="campaign-top">
+  <div>
+   <h2>{{ ad.title }}</h2>
+   <p class="muted">Advertiser: {{ ad.advertiser_name }} · Campaign #{{ ad.id }}</p>
+  </div>
+  <span class="status {{ 'inactive' if campaign_status == 'Inactive' else ('scheduled' if campaign_status == 'Scheduled' else ('expired' if campaign_status == 'Expired' else '')) }}">{{ campaign_status }}</span>
+ </div>
+
+ <img class="banner" src="{{ url_for('uploaded_file', filename=ad.image_file) }}" alt="{{ ad.title }}">
+
+ <div class="stats">
+  <div class="stat"><span>Impressions</span><strong>{{ "{:,}".format(ad.impressions) }}</strong></div>
+  <div class="stat"><span>Clicks</span><strong>{{ "{:,}".format(ad.clicks) }}</strong></div>
+  <div class="stat"><span>Click-through rate</span><strong>{{ "%.2f"|format(ctr) }}%</strong></div>
+ </div>
+
+ <p class="muted">Start: {{ ad.start_date or 'No start date' }} · End: {{ ad.end_date or 'No end date' }}</p>
+ <p class="destination"><a href="{{ ad.target_url }}" target="_blank" rel="noopener noreferrer">View advertiser destination ↗</a></p>
+
+ <div class="actions">
+  <a class="btn" href="{{ url_for('admin_edit_ad', ad_id=ad.id) }}">✏️ Edit campaign</a>
+  <form method="POST" action="{{ url_for('admin_toggle_ad', ad_id=ad.id) }}">
+   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+   <button class="toggle" type="submit">{{ 'Deactivate' if ad.is_active else 'Activate' }}</button>
+  </form>
+  <form method="POST" action="{{ url_for('admin_delete_ad', ad_id=ad.id) }}" onsubmit="return confirm('Permanently delete this campaign?')">
+   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+   <button class="delete" type="submit">Delete</button>
+  </form>
+ </div>
+</article>
+{% endfor %}
+{% else %}
+<div class="campaign empty">
+ <h2>No advertising campaigns yet</h2>
+ <p>Create your first sponsored banner to start working with advertisers.</p>
+ <a class="btn" href="{{ url_for('admin_create_ad') }}">＋ Create first campaign</a>
+</div>
+{% endif %}
+</main>
+</body>
+</html>

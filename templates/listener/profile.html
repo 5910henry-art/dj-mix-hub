@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Account | DJ MIX HUB</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .profile-container {
+            max-width: 750px;
+            margin: 55px auto;
+            padding: 25px;
+        }
+        .profile-card {
+            background: #191923;
+            border: 1px solid #343444;
+            border-radius: 18px;
+            padding: 30px;
+            color: white;
+        }
+        .profile-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: #d9a441;
+            color: #111;
+            display: grid;
+            place-items: center;
+            font-size: 35px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .profile-info {
+            padding: 14px 0;
+            border-bottom: 1px solid #343444;
+        }
+        .profile-info small { color: #aaa; }
+        .profile-info p { margin-bottom: 0; }
+        .profile-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 25px;
+        }
+        .profile-links a {
+            padding: 12px 18px;
+            border-radius: 8px;
+            background: #d9a441;
+            color: #111;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .profile-links a.secondary {
+            background: #343444;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <main class="profile-container">
+        <a href="/">← DJ MIX HUB Home</a>
+
+        <div class="profile-card">
+            <div class="profile-avatar">
+                {{ (listener.display_name or listener.username)[0]|upper }}
+            </div>
+
+            <h1>{{ listener.display_name or listener.username }}</h1>
+            <p>@{{ listener.username }}</p>
+
+            <div class="profile-info">
+                <small>Email address</small>
+                <p>{{ listener.email }}</p>
+            </div>
+
+            <div class="profile-info">
+                <small>About me</small>
+                <p>{{ listener.bio or "No biography added yet." }}</p>
+            </div>
+
+            <div class="profile-info">
+                <small>Member since</small>
+                <p>{{ listener.created_at.strftime("%d %B %Y") if listener.created_at else "Unknown" }}</p>
+            </div>
+
+            <div class="profile-links">
+                <a href="/">Explore Mixes</a>
+                <a href="{{ url_for('listener_favorites') }}" class="secondary">❤️ My Favourite Mixes</a>
+            </div>
+
+            <form action="{{ url_for('listener_logout') }}"
+                  method="POST" style="margin-top:25px;">
+                <input type="hidden" name="csrf_token"
+                       value="{{ csrf_token() }}">
+                <button type="submit">Log Out</button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

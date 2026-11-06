@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edit My Mix | DJ MIX HUB</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:20px;background:#0b0a15;color:white;font-family:Arial,sans-serif}
+main{max-width:650px;margin:25px auto;background:#171526;padding:25px;border-radius:14px}
+label{display:block;margin:18px 0 7px;color:#c4a4ff}
+input,textarea,select{width:100%;padding:13px;border:1px solid #51416d;border-radius:8px;background:#0e0d19;color:white}
+textarea{min-height:120px}
+button{width:100%;padding:14px;margin-top:22px;border:0;border-radius:8px;background:#7545c5;color:white;font-weight:bold}
+a{color:#c4a4ff;text-decoration:none}
+</style>
+</head>
+<body>
+<main>
+<h1>✏️ Edit My Mix</h1>
+{% with messages=get_flashed_messages() %}{% for message in messages %}<p>{{ message }}</p>{% endfor %}{% endwith %}
+<form method="POST">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>Mix title</label>
+<input name="title" maxlength="180" value="{{ mix.title }}" required>
+<label>Description</label>
+<textarea name="description">{{ mix.description or '' }}</textarea>
+<label>Genre</label>
+<select name="genre_id">
+<option value="">No genre</option>
+{% for genre in genres %}
+<option value="{{ genre.id }}" {% if mix.genre_id == genre.id %}selected{% endif %}>{{ genre.name }}</option>
+{% endfor %}
+</select>
+<button type="submit">Save Changes</button>
+</form>
+<p><a href="{{ url_for('dj_dashboard') }}">← Back to Dashboard</a></p>
+</main>
+</body>
+</html>

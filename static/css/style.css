@@ -1,0 +1,839 @@
+:root {
+    --bg: #101018;
+    --surface: #191925;
+    --purple: #a879ff;
+    --pink: #ed72c5;
+    --text: #f7f5ff;
+    --muted: #a3a0b5;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.navbar {
+    min-height: 76px;
+    padding: 16px 7%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    border-bottom: 1px solid #292637;
+}
+
+.brand {
+    font-size: 21px;
+    font-weight: 900;
+    letter-spacing: -1px;
+}
+
+.brand span {
+    color: var(--purple);
+}
+
+nav {
+    display: flex;
+    gap: 28px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+nav a:hover {
+    color: white;
+}
+
+.nav-button,
+.search-form button,
+.download-button {
+    background: linear-gradient(120deg, var(--purple), var(--pink));
+    color: #160e22;
+    border: 0;
+    border-radius: 9px;
+    padding: 11px 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.hero {
+    padding: 85px 9%;
+    min-height: 430px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 35px;
+    background:
+        radial-gradient(ellipse at 80% 50%, #47266d 0%, transparent 48%),
+        #151421;
+}
+
+.hero-content {
+    max-width: 590px;
+}
+
+.eyebrow {
+    color: var(--purple);
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+}
+
+.hero h1 {
+    font-size: clamp(42px, 7vw, 68px);
+    line-height: 1.08;
+    letter-spacing: -3px;
+}
+
+.hero h1 span {
+    color: var(--purple);
+}
+
+.hero-description {
+    color: var(--muted);
+    margin: 18px 0 25px;
+    max-width: 450px;
+}
+
+.search-form {
+    display: flex;
+    max-width: 470px;
+    background: white;
+    padding: 5px;
+    border-radius: 11px;
+}
+
+.search-form input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    padding: 12px;
+    font-size: 14px;
+}
+
+.search-form button {
+    white-space: nowrap;
+}
+
+.hero-art {
+    width: 230px;
+    height: 230px;
+    flex-shrink: 0;
+    border: 2px solid #b28aff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background: radial-gradient(circle, #38204e, #171321 68%);
+    box-shadow: 0 0 65px #a879ff44;
+}
+
+.disc {
+    font-size: 100px;
+    line-height: 1;
+    color: var(--pink);
+}
+
+.sound-label {
+    font-size: 12px;
+    letter-spacing: 4px;
+    font-weight: bold;
+}
+
+.section {
+    padding: 55px 7%;
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.section-heading h2 {
+    font-size: 27px;
+}
+
+.mix-count {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.genre-list {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.genre-chip {
+    padding: 9px 17px;
+    background: var(--surface);
+    border: 1px solid #302b40;
+    border-radius: 30px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.genre-chip:hover,
+.genre-chip.active {
+    background: #382451;
+    color: white;
+    border-color: var(--purple);
+}
+
+.mix-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+    gap: 23px;
+}
+
+.mix-card {
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid #292637;
+    border-radius: 15px;
+    transition: transform .2s;
+}
+
+.mix-card:hover {
+    transform: translateY(-4px);
+}
+
+.cover-art {
+    height: 190px;
+    background: linear-gradient(135deg, #46235e, #171c36, #8b397f);
+    overflow: hidden;
+}
+
+.cover-art img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cover-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.cover-placeholder span {
+    font-size: 75px;
+    color: #e3b4ff;
+}
+
+.cover-placeholder small {
+    letter-spacing: 4px;
+    font-weight: bold;
+}
+
+.mix-info {
+    padding: 17px;
+}
+
+.mix-info h3 {
+    font-size: 17px;
+    margin-bottom: 3px;
+}
+
+.dj-name {
+    color: var(--purple);
+    font-size: 13px;
+}
+
+.genre-tag {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 4px 9px;
+    background: #30233f;
+    color: #d8baff;
+    border-radius: 20px;
+    font-size: 11px;
+}
+
+.mix-stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    color: var(--muted);
+    font-size: 11px;
+    margin: 13px 0;
+}
+
+audio {
+    width: 100%;
+    height: 38px;
+    margin-bottom: 12px;
+}
+
+.download-button {
+    display: block;
+    text-align: center;
+    font-size: 13px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 55px 15px;
+    background: var(--surface);
+    border-radius: 15px;
+    color: var(--muted);
+}
+
+.empty-icon {
+    font-size: 55px;
+    color: var(--purple);
+}
+
+.empty-state h3 {
+    color: white;
+    margin: 10px 0 5px;
+}
+
+footer {
+    padding: 35px 7%;
+    text-align: center;
+    border-top: 1px solid #292637;
+    color: var(--muted);
+}
+
+footer .brand {
+    display: inline-block;
+    color: white;
+    margin-bottom: 8px;
+}
+
+footer small {
+    display: block;
+    margin-top: 15px;
+}
+
+@media (max-width: 700px) {
+    .navbar {
+        flex-wrap: wrap;
+    }
+
+    nav {
+        order: 3;
+        width: 100%;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .nav-button {
+        font-size: 12px;
+        padding: 9px 12px;
+    }
+
+    .hero {
+        padding: 55px 7%;
+    }
+
+    .hero-art {
+        display: none;
+    }
+
+    .section {
+        padding: 40px 6%;
+    }
+
+    .mix-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* YouTube channel section */
+.youtube-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+    padding: 35px;
+    border-radius: 20px;
+    background: linear-gradient(120deg, #21152e, #39152b);
+    border: 1px solid #59304f;
+    overflow: hidden;
+}
+
+.youtube-content {
+    max-width: 650px;
+}
+
+.youtube-content h2 {
+    font-size: clamp(27px, 5vw, 42px);
+    margin: 10px 0;
+}
+
+.youtube-content p:not(.eyebrow) {
+    color: #c5bdce;
+    line-height: 1.7;
+}
+
+.youtube-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.youtube-button,
+.youtube-secondary {
+    display: inline-block;
+    padding: 13px 19px;
+    border-radius: 9px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.youtube-button {
+    background: #e62117;
+    color: white;
+}
+
+.youtube-secondary {
+    border: 1px solid #8d668e;
+    color: white;
+}
+
+.youtube-icon {
+    width: 120px;
+    height: 85px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    background: #e62117;
+    color: white;
+    font-size: 45px;
+    border-radius: 22px;
+}
+
+@media(max-width: 600px) {
+    .youtube-card {
+        padding: 23px;
+    }
+
+    .youtube-icon {
+        display: none;
+    }
+}
+
+/* YouTube channel and featured video */
+.youtube-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+    padding: 35px;
+    border-radius: 20px;
+    background: linear-gradient(120deg, #21152e, #39152b);
+    border: 1px solid #59304f;
+    overflow: hidden;
+}
+
+.youtube-content { max-width: 650px; }
+
+.youtube-content h2 {
+    font-size: clamp(27px, 5vw, 42px);
+    margin: 10px 0;
+}
+
+.youtube-content p:not(.eyebrow) {
+    color: #c5bdce;
+    line-height: 1.7;
+}
+
+.youtube-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.youtube-button,
+.youtube-secondary {
+    display: inline-block;
+    padding: 13px 19px;
+    border-radius: 9px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.youtube-button {
+    background: #e62117;
+    color: white;
+}
+
+.youtube-secondary {
+    border: 1px solid #8d668e;
+    color: white;
+}
+
+.youtube-icon {
+    width: 120px;
+    height: 85px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    background: #e62117;
+    color: white;
+    font-size: 45px;
+    border-radius: 22px;
+}
+
+.video-container {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    aspect-ratio: 16 / 9;
+    margin: 25px auto;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #160d20;
+}
+
+.video-container iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+@media(max-width: 600px) {
+    .youtube-card { padding: 23px; }
+    .youtube-icon { display: none; }
+}
+
+/* Individual mix detail page */
+.mix-detail {
+    padding-top: 35px;
+}
+
+.back-link {
+    display: inline-block;
+    color: #c5bdce;
+    text-decoration: none;
+    margin-bottom: 25px;
+}
+
+.detail-card {
+    display: grid;
+    grid-template-columns: minmax(250px, 380px) 1fr;
+    gap: 35px;
+    align-items: start;
+    padding: 30px;
+    background: #1a1423;
+    border: 1px solid #3b2b48;
+    border-radius: 20px;
+}
+
+.detail-cover img,
+.detail-cover .cover-placeholder {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 14px;
+}
+
+.detail-info h1 {
+    font-size: clamp(27px, 5vw, 42px);
+    margin: 12px 0;
+}
+
+.detail-info audio {
+    width: 100%;
+    margin: 25px 0 15px;
+}
+
+.detail-info .download-button {
+    display: inline-block;
+}
+
+.detail-description {
+    margin-top: 30px;
+    line-height: 1.8;
+    color: #c5bdce;
+    white-space: pre-line;
+}
+
+.detail-related-cover {
+    display: block;
+}
+
+.detail-related-cover img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+.mix-info h3 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+@media(max-width: 700px) {
+    .detail-card {
+        grid-template-columns: 1fr;
+        padding: 18px;
+    }
+
+    .detail-cover {
+        max-width: 400px;
+        width: 100%;
+        margin: auto;
+    }
+}
+
+/* Clickable mix covers and titles */
+.mix-cover-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.mix-info h3 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.mix-info h3 a:hover {
+    color: #c084fc;
+}
+
+/* Sponsored advertisements */
+.sponsored-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+}
+
+.sponsored-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #171526;
+    border: 1px solid #302b42;
+}
+
+.sponsored-label {
+    display: inline-block;
+    margin: 12px 12px 8px;
+    padding: 5px 9px;
+    border-radius: 5px;
+    background: #30254b;
+    color: #d5baff;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.sponsored-card img {
+    display: block;
+    width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+}
+
+.sponsored-info {
+    padding: 15px;
+}
+
+.sponsored-info h3 {
+    margin: 0 0 8px;
+}
+
+.sponsored-info p {
+    color: #aaa6bd;
+}
+
+.sponsored-info a {
+    color: #c4a4ff;
+}
+
+/* DJ booking promotion */
+.booking-promo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+    padding: 35px;
+    border: 1px solid #6342a0;
+    border-radius: 18px;
+    background: linear-gradient(120deg, #21153b, #171526);
+}
+
+.booking-promo h2 {
+    font-size: clamp(25px, 5vw, 38px);
+    margin: 10px 0;
+}
+
+.booking-promo p {
+    color: #d0c9dc;
+    line-height: 1.7;
+}
+
+.booking-promo-button {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 14px 20px;
+    border-radius: 9px;
+    background: linear-gradient(100deg, #793cff, #d33bba);
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.booking-promo-icon {
+    font-size: 90px;
+    color: #bda0ff;
+}
+
+@media (max-width: 600px) {
+    .booking-promo {
+        padding: 22px;
+    }
+
+    .booking-promo-icon {
+        display: none;
+    }
+}
+
+/* Mix social sharing */
+.mix-sharing {
+    margin-top: 25px;
+    padding: 20px;
+    background: #171526;
+    border: 1px solid #302b42;
+    border-radius: 12px;
+}
+
+.mix-sharing h3 {
+    margin-top: 0;
+    color: #fff;
+}
+
+.share-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.share-buttons a,
+.share-buttons button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 17px;
+    border: 0;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.share-whatsapp {
+    background: #25D366;
+}
+
+.share-facebook {
+    background: #1877F2;
+}
+
+.share-copy {
+    background: #7042bd;
+}
+
+.share-native {
+    background: #302b42;
+}
+
+#share-message {
+    color: #c4a4ff;
+    font-size: 13px;
+    margin-bottom: 0;
+}
+
+.share-buttons a:hover,
+.share-buttons button:hover {
+    opacity: .85;
+    transform: translateY(-2px);
+}
+
+@media(max-width:480px) {
+    .share-buttons a,
+    .share-buttons button {
+        flex: 1 1 40%;
+    }
+}
+
+/* Listener favourite button */
+.favorite-form {
+    margin: 15px 0;
+}
+
+.favorite-button {
+    display: inline-block;
+    padding: 11px 20px;
+    border: none;
+    border-radius: 25px;
+    background: #e91e63;
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.favorite-button:hover {
+    background: #c2185b;
+    transform: translateY(-2px);
+}
+
+/* DJ account navigation */
+.dj-account-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 5%;
+    background: #171526;
+}
+
+.dj-account-links a {
+    display: inline-block;
+    padding: 9px 15px;
+    border: 1px solid #8b65d6;
+    border-radius: 8px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.dj-account-links a:last-child {
+    background: linear-gradient(100deg, #793cff, #d33bba);
+    border-color: transparent;
+}

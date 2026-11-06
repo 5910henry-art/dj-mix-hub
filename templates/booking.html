@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Book DJ Jitiasque Unique | DJ MIX HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .booking-page {
+            max-width: 720px;
+            margin: 45px auto;
+            padding: 25px;
+        }
+        .booking-page h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .booking-page .intro {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #aaa6bd;
+        }
+        .booking-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+        .booking-form .full {
+            grid-column: 1 / -1;
+        }
+        .booking-form label {
+            display: block;
+            margin-bottom: 7px;
+        }
+        .booking-form input,
+        .booking-form select,
+        .booking-form textarea {
+            width: 100%;
+            padding: 13px;
+            border-radius: 8px;
+            border: 1px solid #51456b;
+            background: #211b30;
+            color: white;
+            box-sizing: border-box;
+        }
+        .booking-form textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+        .booking-form button {
+            width: 100%;
+            padding: 15px;
+            border: 0;
+            border-radius: 8px;
+            background: #9b72ff;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .booking-message {
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background: #30263f;
+        }
+        @media (max-width: 550px) {
+            .booking-form {
+                grid-template-columns: 1fr;
+            }
+            .booking-form .full {
+                grid-column: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="booking-page">
+        <h1>🎧 Book DJ Jitiasque Unique</h1>
+        <p class="intro">
+            Make your event unforgettable. Send your booking request below.
+        </p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="booking-message">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" class="booking-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="full">
+                <label for="dj_id">Choose a DJ</label>
+                <select id="dj_id" name="dj_id">
+                    <option value="">General booking / let admin assign a DJ</option>
+                    {% for dj in djs %}
+                    <option value="{{ dj.id }}"
+                        {% if selected_dj_id == dj.id %}selected{% endif %}>
+                        {{ dj.display_name or dj.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <small style="display:block;margin-top:7px;color:#aaa6bd">
+                    You can choose a specific DJ or leave this for the admin to assign.
+                </small>
+            </div>
+
+            <div>
+                <label for="client_name">Your name *</label>
+                <input id="client_name" name="client_name"
+                       maxlength="120" required>
+            </div>
+
+            <div>
+                <label for="phone">Phone number *</label>
+                <input id="phone" name="phone"
+                       type="tel" maxlength="30" required
+                       placeholder="e.g. 07XXXXXXXX">
+            </div>
+
+            <div class="full">
+                <label for="email">Email address</label>
+                <input id="email" name="email" type="email"
+                       maxlength="150">
+            </div>
+
+            <div>
+                <label for="event_type">Event type *</label>
+                <select id="event_type" name="event_type" required>
+                    <option value="">Select event</option>
+                    <option>Wedding</option>
+                    <option>Birthday Party</option>
+                    <option>Corporate Event</option>
+                    <option>Club / Night Party</option>
+                    <option>Graduation Party</option>
+                    <option>Private Party</option>
+                    <option>Concert</option>
+                    <option>Other</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="event_date">Event date *</label>
+                <input id="event_date" name="event_date"
+                       type="date" min="{{ today }}" required>
+            </div>
+
+            <div class="full">
+                <label for="venue">Event venue / location *</label>
+                <input id="venue" name="venue"
+                       maxlength="200" required
+                       placeholder="Town, venue or event location">
+            </div>
+
+            <div class="full">
+                <label for="budget">Estimated budget (KES)</label>
+                <input id="budget" name="budget"
+                       type="number" min="0" step="0.01"
+                       placeholder="Optional">
+            </div>
+
+            <div class="full">
+                <label for="message">Additional details</label>
+                <textarea id="message" name="message"
+                          placeholder="Tell us more about your event..."></textarea>
+            </div>
+
+            <div class="full">
+                <button type="submit">Send Booking Request 🎵</button>
+            </div>
+        </form>
+
+        <p style="text-align:center;margin-top:25px">
+            <a href="{{ url_for('home') }}">← Back to DJ MIX HUB</a>
+        </p>
+    </main>
+</body>
+</html>

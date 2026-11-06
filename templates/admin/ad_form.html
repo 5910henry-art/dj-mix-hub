@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ 'Edit' if is_edit else 'Create' }} Campaign | DJ MIX HUB</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0915;color:#f7f4ff;font-family:Arial,sans-serif}
+main{max-width:700px;margin:25px auto;padding:15px 5% 45px}
+a{color:#c5a6ff;text-decoration:none}
+.back{display:inline-block;margin-bottom:18px}
+.card{background:linear-gradient(145deg,#1b172c,#12101e);border:1px solid #302943;border-radius:16px;padding:25px}
+.eyebrow{color:#b69aff;font-size:11px;letter-spacing:2px;font-weight:bold}
+h1{font-size:25px}
+p{color:#aaa5bd;line-height:1.6}
+label{display:block;margin:19px 0 8px;color:#d4c2ff;font-size:13px;font-weight:bold}
+input{width:100%;padding:13px;border-radius:9px;border:1px solid #493d60;background:#0b0915;color:white;font-size:15px}
+input:focus{outline:2px solid #8454dd;border-color:transparent}
+input[type=file]{font-size:13px}
+input[type=date]{color-scheme:dark}
+.hint{font-size:12px;color:#938ba7;margin-top:7px}
+.preview{width:100%;max-height:190px;object-fit:contain;background:#0b0915;border:1px solid #302943;border-radius:10px;margin-top:12px}
+button{width:100%;margin-top:25px;padding:15px;border:0;border-radius:9px;background:linear-gradient(110deg,#713cff,#bd43d4);color:white;font-weight:bold;font-size:15px;cursor:pointer}
+.flash{padding:12px;background:#422a31;color:#ffc1c9;border-radius:8px}
+</style>
+</head>
+<body>
+<main>
+<a class="back" href="{{ url_for('admin_manage_ads') }}">← Back to Campaign Manager</a>
+<div class="card">
+<p class="eyebrow">DJ MIX HUB · ADVERTISING</p>
+<h1>{{ '✏️ Edit Campaign' if is_edit else '📢 Create Sponsored Campaign' }}</h1>
+<p>{{ 'Update the advertiser details, destination or banner.' if is_edit else 'Add a business or brand promotion to the DJ MIX HUB homepage.' }}</p>
+
+{% with messages = get_flashed_messages() %}
+{% for message in messages %}
+<div class="flash">{{ message }}</div>
+{% endfor %}
+{% endwith %}
+
+<form method="POST" enctype="multipart/form-data">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+<label>Advertiser name</label>
+<input name="advertiser_name" required maxlength="120"
+ value="{{ ad.advertiser_name if ad else '' }}" placeholder="e.g. Nairobi Music Store">
+
+<label>Campaign title</label>
+<input name="title" required maxlength="180"
+ value="{{ ad.title if ad else '' }}" placeholder="e.g. Get the latest DJ equipment">
+
+<label>Advertiser website / destination URL</label>
+<input type="url" name="target_url" required
+ value="{{ ad.target_url if ad else '' }}" placeholder="https://example.com">
+
+{% if ad %}
+<label>Current banner</label>
+<img class="preview" src="{{ url_for('uploaded_file', filename=ad.image_file) }}" alt="Current campaign banner">
+{% endif %}
+
+<label>{{ 'Replace banner image (optional)' if ad else 'Campaign banner image' }}</label>
+<input type="file" name="image" accept=".jpg,.jpeg,.png,.webp" {% if not ad %}required{% endif %}>
+<p class="hint">Accepted formats: JPG, JPEG, PNG and WEBP.</p>
+
+<label>Campaign start date (optional)</label>
+<input type="date" name="start_date" value="{{ ad.start_date.isoformat() if ad and ad.start_date else '' }}">
+
+<label>Campaign end date (optional)</label>
+<input type="date" name="end_date" value="{{ ad.end_date.isoformat() if ad and ad.end_date else '' }}">
+<p class="hint">Leave dates empty for a campaign without a scheduled start or end.</p>
+
+<button type="submit">{{ 'Save campaign changes' if is_edit else 'Create campaign' }}</button>
+</form>
+</div>
+</main>
+</body>
+</html>

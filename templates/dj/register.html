@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DJ Registration | DJ MIX HUB</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:25px 15px;background:#0b0a15;color:white;font-family:Arial,sans-serif}
+.container{max-width:480px;margin:35px auto;padding:28px;background:#171526;border:1px solid #302a45;border-radius:16px}
+input{width:100%;padding:13px;margin:8px 0 17px;border:1px solid #39334f;border-radius:8px;background:#0d0c18;color:white}
+label{display:block;color:#c4a4ff}button{width:100%;padding:14px;border:0;border-radius:9px;background:linear-gradient(100deg,#793cff,#d33bba);color:white;font-weight:bold}
+a{color:#c4a4ff;text-decoration:none}.message{color:#ffaaaa}.hint{color:#aaa6bd;font-size:13px}
+</style>
+</head>
+<body><div class="container">
+<h1>🎧 Join DJ MIX HUB</h1>
+<p>Create your DJ account. Your account will be reviewed before access is granted.</p>
+{% with messages=get_flashed_messages() %}{% for message in messages %}<p class="message">{{ message }}</p>{% endfor %}{% endwith %}
+<form method="POST">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label>DJ username</label><input name="username" maxlength="80" required>
+<label>Email address</label><input type="email" name="email" maxlength="150" required>
+<label>DJ display name</label><input name="display_name" maxlength="120" required>
+<label>Password</label><input type="password" name="password" minlength="8" required>
+<label>Confirm password</label><input type="password" name="confirm_password" minlength="8" required>
+<button type="submit">Create DJ Account</button>
+</form>
+<p class="hint">Approval is required before you can access your DJ dashboard.</p>
+<p>Already registered? <a href="{{ url_for('dj_login') }}">DJ Login</a></p>
+<p><a href="/">← Back to website</a></p>
+</div></body></html>

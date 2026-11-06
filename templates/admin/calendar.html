@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Booking Calendar - DJ MIX HUB</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 18px;
+            background: #101018;
+            color: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+        .container { max-width: 1100px; margin: auto; }
+        a { color: #b99aff; text-decoration: none; }
+        .nav {
+            display: flex; justify-content: space-between;
+            align-items: center; gap: 12px; flex-wrap: wrap;
+            margin: 22px 0;
+        }
+        .nav a, .back {
+            background: #29213c; padding: 10px 14px;
+            border-radius: 8px; display: inline-block;
+        }
+        .summary {
+            background: #211d2c; padding: 15px;
+            border-radius: 10px; margin-bottom: 18px;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 5px;
+        }
+        .weekday {
+            text-align: center; padding: 10px 2px;
+            background: #29213c; font-weight: bold;
+            border-radius: 6px; font-size: 13px;
+        }
+        .day {
+            background: #1b1b26; border: 1px solid #343443;
+            border-radius: 7px; min-height: 105px;
+            padding: 7px; min-width: 0;
+        }
+        .day.today { border: 2px solid #a77bff; }
+        .number { font-weight: bold; color: #c9b4ff; }
+        .event {
+            display: block; background: #174b39;
+            color: #baffd8; padding: 6px;
+            border-radius: 5px; margin-top: 6px;
+            font-size: 12px; overflow-wrap: anywhere;
+        }
+        .empty { background: transparent; border: 0; }
+        @media(max-width: 600px) {
+            body { padding: 9px; }
+            .calendar { gap: 3px; }
+            .weekday { font-size: 10px; padding: 8px 0; }
+            .day { min-height: 75px; padding: 4px; }
+            .event { font-size: 10px; padding: 4px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a class="back" href="{{ url_for('admin_dashboard') }}">← Dashboard</a>
+
+    <h1>📅 DJ Booking Calendar</h1>
+    <p>View your confirmed DJ events by date.</p>
+
+    <div class="summary">
+        <strong>{{ booking_count }}</strong>
+        confirmed booking(s) in {{ month_name }} {{ year }}
+    </div>
+
+    <div class="nav">
+        <a href="{{ url_for('admin_booking_calendar', year=previous_month.year, month=previous_month.month) }}">← Previous</a>
+        <h2>{{ month_name }} {{ year }}</h2>
+        <a href="{{ url_for('admin_booking_calendar', year=next_month.year, month=next_month.month) }}">Next →</a>
+    </div>
+
+    <div class="calendar">
+        {% for day_name in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}
+            <div class="weekday">{{ day_name }}</div>
+        {% endfor %}
+
+        {% for week in weeks %}
+            {% for day in week %}
+                {% if day %}
+                    <div class="day {% if day == today %}today{% endif %}">
+                        <div class="number">{{ day.day }}</div>
+                        {% for booking in events_by_day.get(day, []) %}
+                            <div class="event">
+                                <strong>{{ booking.client_name }}</strong><br>
+                                {{ booking.event_type }}<br>
+                                📍 {{ booking.venue }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="day empty"></div>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+
+    <p style="margin-top:20px">
+        <a href="{{ url_for('admin_manage_bookings') }}">Manage all bookings →</a>
+    </p>
+</div>
+</body>
+</html>

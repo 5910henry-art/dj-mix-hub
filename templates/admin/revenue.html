@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Advertising Revenue | DJ MIX HUB</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0915;color:#f7f4ff;font-family:Arial,sans-serif}
+main{max-width:1150px;margin:auto;padding:25px 5% 50px}
+a{color:#c5a6ff;text-decoration:none}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.eyebrow{color:#b69aff;font-size:11px;letter-spacing:2px;font-weight:bold}
+.muted{color:#aaa5bd;font-size:13px;line-height:1.6}
+.btn{display:inline-block;background:linear-gradient(110deg,#713cff,#bd43d4);color:white;padding:11px 15px;border-radius:8px;font-weight:bold}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:24px 0}
+.metric,.campaign{background:linear-gradient(145deg,#1b172c,#12101e);border:1px solid #302943;border-radius:14px;padding:18px}
+.metric span{display:block;color:#aaa5bd;font-size:12px}
+.metric strong{display:block;font-size:25px;margin-top:9px}
+.campaign{margin:16px 0}
+.campaign h2{font-size:19px;margin:0 0 5px}
+.campaign-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.balance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:16px 0}
+.balance div{background:#100e1c;border:1px solid #29233b;border-radius:9px;padding:12px}
+.balance span{display:block;color:#aaa5bd;font-size:11px}
+.balance strong{display:block;font-size:18px;margin-top:7px}
+form{margin-top:13px}
+label{display:block;color:#d4c2ff;font-size:12px;font-weight:bold;margin:12px 0 6px}
+input,select,textarea{width:100%;padding:11px;border-radius:8px;border:1px solid #493d60;background:#0b0915;color:white}
+button{border:0;border-radius:8px;padding:12px 15px;background:#7541d8;color:white;font-weight:bold;margin-top:12px;cursor:pointer}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.panel{background:#100e1c;border:1px solid #29233b;border-radius:11px;padding:15px;margin-top:17px}
+.history{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+.history th,.history td{text-align:left;padding:10px 7px;border-bottom:1px solid #302943}
+.history th{color:#bba6e8}
+.flash{background:#202b25;color:#a5f0bd;border-radius:8px;padding:11px;margin:10px 0}
+@media(max-width:650px){
+ main{padding:18px 4% 40px}
+ .metrics{grid-template-columns:1fr}
+ .balance{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .balance div{padding:9px}
+ .balance strong{font-size:15px}
+ .form-grid{grid-template-columns:1fr}
+ .history{font-size:11px}
+ .history th,.history td{padding:8px 4px}
+}
+</style>
+</head>
+<body>
+<main>
+<div class="top">
+ <div>
+  <p class="eyebrow">DJ MIX HUB · FINANCIAL CONTROL</p>
+  <h1>💰 Advertising Revenue</h1>
+  <p class="muted">Track agreed fees, advertiser payments and outstanding balances.</p>
+ </div>
+ <a href="{{ url_for('admin_dashboard') }}">← Dashboard</a>
+</div>
+
+{% with messages = get_flashed_messages() %}
+{% for message in messages %}
+<div class="flash">{{ message }}</div>
+{% endfor %}
+{% endwith %}
+
+<div class="metrics">
+ <div class="metric"><span>Total agreed fees</span><strong>KSh {{ "{:,.2f}".format(total_agreed) }}</strong></div>
+ <div class="metric"><span>Total received</span><strong>KSh {{ "{:,.2f}".format(total_received) }}</strong></div>
+ <div class="metric"><span>Total outstanding</span><strong>KSh {{ "{:,.2f}".format(total_outstanding) }}</strong></div>
+</div>
+
+<h2>Campaign accounts</h2>
+{% if ads %}
+{% for ad in ads %}
+{% set contract = contracts.get(ad.id) %}
+{% set agreed = contract.agreed_amount if contract else 0 %}
+{% set received = received_by_ad.get(ad.id, 0) %}
+{% set outstanding = agreed - received %}
+<article class="campaign">
+ <div class="campaign-head">
+  <div>
+   <h2>{{ ad.title }}</h2>
+   <p class="muted">{{ ad.advertiser_name }} · Campaign #{{ ad.id }}</p>
+  </div>
+  <strong>{{ 'Settled' if agreed > 0 and outstanding == 0 else ('Not priced' if not contract else 'Balance due') }}</strong>
+ </div>
+
+ <div class="balance">
+  <div><span>Agreed fee</span><strong>KSh {{ "{:,.2f}".format(agreed) }}</strong></div>
+  <div><span>Received</span><strong>KSh {{ "{:,.2f}".format(received) }}</strong></div>
+  <div><span>Outstanding</span><strong>KSh {{ "{:,.2f}".format(outstanding) }}</strong></div>
+ </div>
+
+ <div class="panel">
+  <strong>Set or update agreed fee</strong>
+  <form method="POST" action="{{ url_for('admin_revenue_set_fee', ad_id=ad.id) }}">
+   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+   <label>Agreed campaign amount (KES)</label>
+   <input type="number" name="agreed_amount" min="0" step="0.01" required value="{{ '%.2f'|format(agreed) }}">
+   <button type="submit">Save agreed fee</button>
+  </form>
+ </div>
+
+ {% if contract and outstanding > 0 %}
+ <div class="panel">
+  <strong>Record advertiser payment</strong>
+  <form method="POST" action="{{ url_for('admin_revenue_add_payment', ad_id=ad.id) }}">
+   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+   <div class="form-grid">
+    <div>
+     <label>Amount received (KES)</label>
+     <input type="number" name="amount" min="0.01" max="{{ outstanding }}" step="0.01" required>
+    </div>
+    <div>
+     <label>Payment method</label>
+     <select name="method" required>
+      <option value="">Choose method</option>
+      <option>M-PESA</option>
+      <option>Bank</option>
+      <option>Cash</option>
+      <option>Other</option>
+     </select>
+    </div>
+    <div>
+     <label>Payment date</label>
+     <input type="date" name="paid_on" value="{{ today.isoformat() }}" required>
+    </div>
+    <div>
+     <label>Transaction reference (optional)</label>
+     <input name="reference" maxlength="120" placeholder="e.g. M-PESA receipt code">
+    </div>
+   </div>
+   <label>Notes (optional)</label>
+   <textarea name="notes" maxlength="500" rows="2" placeholder="Payment details"></textarea>
+   <button type="submit">Record payment</button>
+  </form>
+ </div>
+ {% endif %}
+
+ {% if payments.get(ad.id) %}
+ <div class="panel">
+  <strong>Payment history</strong>
+  <table class="history">
+   <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Reference</th></tr></thead>
+   <tbody>
+   {% for payment in payments[ad.id] %}
+    <tr>
+     <td>{{ payment.paid_on }}</td>
+     <td>KSh {{ "{:,.2f}".format(payment.amount) }}</td>
+     <td>{{ payment.method }}</td>
+     <td>{{ payment.reference or '—' }}</td>
+    </tr>
+   {% endfor %}
+   </tbody>
+  </table>
+ </div>
+ {% endif %}
+</article>
+{% endfor %}
+{% else %}
+<div class="campaign"><p class="muted">Create an advertising campaign first to manage its revenue.</p></div>
+{% endif %}
+</main>
+</body>
+</html>

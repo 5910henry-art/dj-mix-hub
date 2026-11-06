@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101018">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DJ MIX HUB">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='pwa/icon-192.png') }}">
+    <title>DJ MIX HUB | Discover Your Sound</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header class="navbar">
+    <a href="/" class="brand">🎧 DJ MIX <span>HUB</span></a>
+    <nav>
+        <a href="/">Home</a>
+        <a href="#genres">Genres</a>
+        <a href="#latest">Latest Mixes</a>
+        <a href="#youtube">YouTube</a>
+        <a href="{{ url_for('public_dj_directory') }}">Discover DJs</a>
+        <a href="#book-dj">Book a DJ</a>
+    </nav>
+    {% if listener %}
+        <a href="{{ url_for('listener_profile') }}" class="nav-button">
+            👤 My Account
+        </a>
+        <form action="{{ url_for('listener_logout') }}" method="POST"
+              style="display:inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="nav-button">Logout</button>
+        </form>
+    {% elif current_user.is_authenticated %}
+        {% if current_user.is_admin %}
+            <a href="{{ url_for('admin_dashboard') }}" class="nav-button">
+                Admin Dashboard
+            </a>
+            <form action="{{ url_for('admin_logout') }}" method="POST"
+                  style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="nav-button">Logout</button>
+            </form>
+        {% else %}
+            <a href="{{ url_for('dj_dashboard') }}" class="nav-button">
+                DJ Dashboard
+            </a>
+            <form action="{{ url_for('dj_logout') }}" method="POST"
+                  style="display:inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="nav-button">Logout</button>
+            </form>
+        {% endif %}
+    {% else %}
+        <a href="{{ url_for('account_login_choice') }}" class="nav-button">
+            Login
+        </a>
+        <a href="{{ url_for('account_register_choice') }}" class="nav-button">
+            Register
+        </a>
+    {% endif %}
+</header>
+
+<main>
+    <section class="hero">
+        <div class="hero-content">
+            <p class="eyebrow">YOUR SOUND. YOUR VIBE.</p>
+            <h1>Feel the music.<br><span>Live the mix.</span></h1>
+            <p class="hero-description">
+                Discover amazing DJ mixes, explore new sounds
+                and enjoy your favourite music.
+            </p>
+
+            <form action="/" method="GET" class="search-form">
+                <input type="search" name="q"
+                       value="{{ search }}"
+                       placeholder="Search mixes or DJs...">
+                <button type="submit">Search</button>
+            </form>
+        </div>
+        <div class="hero-art">
+            <div class="disc">♫</div>
+            <div class="sound-label">DJ MIX HUB</div>
+        </div>
+    </section>
+
+
+    <section class="section" id="youtube">
+        <div class="youtube-card">
+            <div class="youtube-content">
+                <p class="eyebrow">WATCH. LISTEN. SUBSCRIBE.</p>
+                <h2>DJ Jitiasque Unique</h2>
+                <p>
+                    Experience more music, exclusive DJ mixes and
+                    entertainment on my official YouTube channel.
+                </p>
+                <div class="youtube-actions">
+                    <a class="youtube-button"
+                       href="https://www.youtube.com/@deejayjitiasqueunique9895?sub_confirmation=1"
+                       target="_blank" rel="noopener noreferrer">
+                        ▶ Subscribe on YouTube
+                    </a>
+                    <a class="youtube-secondary"
+                       href="https://www.youtube.com/@deejayjitiasqueunique9895/videos"
+                       target="_blank" rel="noopener noreferrer">
+                        Explore Videos →
+                    </a>
+                </div>
+            </div>
+            <div class="youtube-icon">▶</div>
+        </div>
+    </section>
+
+    <section class="section" id="featured-video">
+        <p class="eyebrow">FEATURED MIX</p>
+        <h2>Watch DJ Jitiasque Unique</h2>
+        <div class="video-container">
+            <iframe
+                src="https://www.youtube.com/embed/9xJQjAvqiHQ?playsinline=1"
+                title="DJ Jitiasque Unique Featured Mix"
+                loading="lazy"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen>
+            </iframe>
+        </div>
+    </section>
+
+
+    {% if ads %}
+    <section class="section" id="sponsored">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">PARTNER WITH DJ MIX HUB</p>
+                <h2>Sponsored</h2>
+            </div>
+        </div>
+
+        <div class="sponsored-grid">
+            {% for ad in ads %}
+            <article class="sponsored-card">
+                <span class="sponsored-label">SPONSORED</span>
+                <a href="{{ url_for('advertisement_click', ad_id=ad.id) }}"
+                   target="_blank" rel="noopener noreferrer">
+                    <img src="{{ url_for('uploaded_file', filename=ad.image_file) }}"
+                         alt="{{ ad.title }}">
+                </a>
+                <div class="sponsored-info">
+                    <h3>{{ ad.title }}</h3>
+                    <p>{{ ad.advertiser_name }}</p>
+                    <a href="{{ url_for('advertisement_click', ad_id=ad.id) }}"
+                       target="_blank" rel="noopener noreferrer">
+                        Learn more →
+                    </a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="section booking-promo" id="book-dj">
+        <div>
+            <p class="eyebrow">MAKE YOUR EVENT UNFORGETTABLE</p>
+            <h2>Need a DJ for Your Event?</h2>
+            <p>
+                Bring the energy with DJ Jitiasque Unique.
+                Book professional entertainment for your celebration,
+                party, wedding or special occasion.
+            </p>
+            <a class="booking-promo-button"
+               href="{{ url_for('public_booking') }}">
+                🎧 Book DJ Jitiasque Unique
+            </a>
+        </div>
+        <div class="booking-promo-icon">♫</div>
+    </section>
+
+    <section class="section" id="genres">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">EXPLORE YOUR VIBE</p>
+                <h2>Browse Genres</h2>
+            </div>
+        </div>
+
+        <div class="genre-list">
+            <a href="/" class="genre-chip">All Music</a>
+            {% for genre in genres %}
+            <a href="/?genre={{ genre.id }}"
+               class="genre-chip {% if selected_genre == genre.id %}active{% endif %}">
+                {{ genre.name }}
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="section" id="latest">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">FRESH FROM THE DECKS</p>
+                <h2>
+                    {% if search %}Search Results{% else %}Latest Mixes{% endif %}
+                </h2>
+            </div>
+            <span class="mix-count">{{ mixes|length }} mixes</span>
+        </div>
+
+        {% if mixes %}
+        <div class="mix-grid">
+            {% for mix in mixes %}
+            <article class="mix-card">
+                <a href="{{ url_for('mix_detail', mix_id=mix.id) }}" class="mix-cover-link">
+                <div class="cover-art">
+                    {% if mix.cover_image %}
+                        {% if mix.cover_image.startswith('http') %}
+                        <img src="{{ mix.cover_image }}" alt="{{ mix.title }}">
+                        {% else %}
+                        <img src="{{ url_for('uploaded_file', filename=mix.cover_image) }}"
+                             alt="{{ mix.title }}">
+                        {% endif %}
+                    {% else %}
+                    <div class="cover-placeholder">
+                        <span>♫</span>
+                        <small>DJ MIX HUB</small>
+                    </div>
+                    {% endif %}
+                </div>
+                </a>
+
+                <div class="mix-info">
+                    <h3><a href="{{ url_for('mix_detail', mix_id=mix.id) }}">{{ mix.title }}</a></h3>
+                    <p class="dj-name">
+                        {{ mix.dj.display_name or mix.dj.username }}
+                    </p>
+
+                    {% if mix.genre %}
+                    <span class="genre-tag">{{ mix.genre.name }}</span>
+                    {% endif %}
+
+                    <div class="mix-stats">
+                        <span>▶ {{ mix.plays }} plays</span>
+                        <span>↓ {{ mix.downloads }} downloads</span>
+                    </div>
+
+                    <audio controls preload="none"
+                           src="{{ url_for('stream_mix', mix_id=mix.id) }}">
+                        Your browser does not support audio playback.
+                    </audio>
+
+                    <a class="download-button"
+                       href="{{ url_for('download_mix', mix_id=mix.id) }}">
+                        ↓ Download Mix
+                    </a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">♫</div>
+            <h3>No mixes yet</h3>
+            <p>Your next favourite mix will appear here.</p>
+        </div>
+        {% endif %}
+    </section>
+</main>
+
+<footer>
+    <a href="/" class="brand">🎧 DJ MIX <span>HUB</span></a>
+    <p>Listen. Discover. Download.</p>
+    <small>© 2026 DJ MIX HUB. All rights reserved.</small>
+</footer>
+
+<script>
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+        navigator.serviceWorker.register("/service-worker.js")
+            .then(function (registration) {
+                console.log("DJ MIX HUB PWA ready:", registration.scope);
+            })
+            .catch(function (error) {
+                console.error("PWA registration failed:", error);
+            });
+    });
+}
+</script>
+</body>
+</html>

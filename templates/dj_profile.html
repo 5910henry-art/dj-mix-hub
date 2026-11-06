@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ dj.display_name or dj.username }} | DJ MIX HUB</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0a15;color:white;font-family:Arial,sans-serif}
+header{padding:18px 5%;background:#151323;border-bottom:1px solid #302b42}
+a{color:#c4a4ff;text-decoration:none}
+header a{margin-right:20px}
+main{max-width:1100px;margin:auto;padding:30px 5%}
+.hero{display:flex;align-items:center;gap:25px;padding:28px;background:linear-gradient(120deg,#21153b,#171526);border:1px solid #6342a0;border-radius:16px}
+.avatar{width:145px;height:145px;border-radius:50%;object-fit:cover;background:#29213c}
+.placeholder{width:145px;height:145px;border-radius:50%;display:grid;place-items:center;background:#29213c;color:#c4a4ff;font-size:55px;flex-shrink:0}
+.bio{color:#d0c9dc;line-height:1.7;white-space:pre-line}
+
+.social-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.social-links a{display:inline-flex;align-items:center;gap:8px;padding:11px 15px;border-radius:9px;background:#30254b;color:white;font-weight:bold;transition:transform .2s,opacity .2s}
+.social-links a:hover{transform:translateY(-3px);opacity:.85}
+.social-links .youtube{background:#c52222}
+.social-links .instagram{background:linear-gradient(45deg,#833ab4,#fd1d1d,#fcb045)}
+.social-links .tiktok{background:#111;border:1px solid #444}
+.social-links .facebook{background:#1877f2}
+
+h1{font-size:clamp(26px,5vw,40px);margin:0 0 10px}
+h2{margin-top:35px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+.card{overflow:hidden;background:#171526;border:1px solid #302b42;border-radius:13px}
+.cover{width:100%;height:160px;object-fit:cover;background:#29213c}
+.card-content{padding:16px}
+.card p{color:#aaa6bd}
+.actions{display:flex;gap:12px;flex-wrap:wrap}
+.actions a{display:inline-block;padding:10px 13px;border-radius:7px;background:#30254b}
+.empty{padding:22px;background:#171526;border-radius:12px;color:#aaa6bd}
+@media(max-width:600px){.hero{flex-direction:column;text-align:center}.avatar,.placeholder{width:120px;height:120px}}
+</style>
+</head>
+<body>
+<header>
+<a href="/">🎧 DJ MIX HUB</a>
+<a href="{{ url_for('public_dj_directory') }}">← All DJs</a>
+<a href="{{ url_for("public_booking", dj_id=dj.id) }}">Book this DJ</a>
+</header>
+<main>
+<section class="hero">
+{% if dj.profile_image %}
+<img class="avatar" src="{{ url_for('uploaded_file', filename=dj.profile_image) }}" alt="{{ dj.display_name or dj.username }}">
+{% else %}
+<div class="placeholder">🎧</div>
+{% endif %}
+<div>
+<h1>{{ dj.display_name or dj.username }}</h1>
+<p class="bio">{{ dj.bio or 'Welcome to this DJ profile. Explore the latest mixes below.' }}</p>
+<p>{{ mixes|length }} published mix{{ '' if mixes|length == 1 else 'es' }}</p>
+<div class="actions" style="margin-top:18px">
+<a href="{{ url_for('public_booking', dj_id=dj.id) }}">🎧 Book {{ dj.display_name or dj.username }}</a>
+</div>
+
+{% if dj.youtube_url or dj.instagram_url or dj.tiktok_url or dj.facebook_url %}
+<div class="social-links">
+{% if dj.youtube_url %}
+<a class="youtube" href="{{ dj.youtube_url }}" target="_blank" rel="noopener noreferrer">▶ YouTube</a>
+{% endif %}
+{% if dj.instagram_url %}
+<a class="instagram" href="{{ dj.instagram_url }}" target="_blank" rel="noopener noreferrer">◎ Instagram</a>
+{% endif %}
+{% if dj.tiktok_url %}
+<a class="tiktok" href="{{ dj.tiktok_url }}" target="_blank" rel="noopener noreferrer">♪ TikTok</a>
+{% endif %}
+{% if dj.facebook_url %}
+<a class="facebook" href="{{ dj.facebook_url }}" target="_blank" rel="noopener noreferrer">f Facebook</a>
+{% endif %}
+</div>
+{% endif %}
+</div>
+</section>
+
+<h2>🎵 Mixes by {{ dj.display_name or dj.username }}</h2>
+<div class="grid">
+{% for mix in mixes %}
+<article class="card">
+{% if mix.cover_image %}
+<img class="cover" src="{{ url_for('uploaded_file', filename=mix.cover_image) }}" alt="{{ mix.title }}">
+{% else %}
+<div class="cover"></div>
+{% endif %}
+<div class="card-content">
+<h3>{{ mix.title }}</h3>
+<p>{{ mix.genre.name if mix.genre else 'Uncategorized' }} · {{ mix.plays }} plays</p>
+<div class="actions">
+<a href="{{ url_for('mix_detail', mix_id=mix.id) }}">Listen</a>
+<a href="{{ url_for('download_mix', mix_id=mix.id) }}">Download</a>
+</div>
+</div>
+</article>
+{% else %}
+<div class="empty">This DJ has no published mixes yet.</div>
+{% endfor %}
+</div>
+</main>
+</body>
+</html>

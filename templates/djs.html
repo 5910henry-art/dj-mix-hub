@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Discover DJs | DJ MIX HUB</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0a15;color:white;font-family:Arial,sans-serif}
+main{max-width:1100px;margin:auto;padding:30px 5%}
+a{color:#c4a4ff;text-decoration:none}
+header{padding:18px 5%;background:#151323;border-bottom:1px solid #302b42}
+header a{margin-right:20px}
+h1{font-size:clamp(28px,5vw,42px)}
+.intro{color:#aaa6bd;line-height:1.7}
+.search{display:flex;gap:10px;margin:25px 0}
+input{flex:1;min-width:0;padding:13px;border-radius:8px;border:1px solid #51416d;background:#171526;color:white}
+button{padding:13px 18px;border:0;border-radius:8px;background:#793cff;color:white;font-weight:bold}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.card{background:#171526;border:1px solid #302b42;border-radius:14px;padding:20px;text-align:center}
+.avatar{width:110px;height:110px;border-radius:50%;object-fit:cover;background:#29213c}
+.placeholder{width:110px;height:110px;border-radius:50%;margin:auto;display:grid;place-items:center;background:#29213c;color:#c4a4ff;font-size:42px}
+.card h2{font-size:20px;margin-bottom:8px}
+.card p{color:#aaa6bd;line-height:1.5}
+.profile-link{display:inline-block;margin-top:10px;padding:10px 15px;background:#30254b;border-radius:8px}
+.empty{padding:25px;background:#171526;border-radius:12px;color:#aaa6bd}
+</style>
+</head>
+<body>
+<header>
+<a href="/">🎧 DJ MIX HUB</a>
+<a href="/djs">Discover DJs</a>
+<a href="/#book-dj">Book a DJ</a>
+</header>
+<main>
+<h1>Discover DJs 🎧</h1>
+<p class="intro">Meet the DJs behind the mixes. Explore their profiles and discover music from different styles and genres.</p>
+
+<form class="search" method="GET">
+<input name="q" value="{{ search }}" placeholder="Search DJ name or biography...">
+<button type="submit">Search</button>
+</form>
+
+<div class="grid">
+{% for dj in djs %}
+<article class="card">
+{% if dj.profile_image %}
+<img class="avatar" src="{{ url_for('uploaded_file', filename=dj.profile_image) }}" alt="{{ dj.display_name or dj.username }}">
+{% else %}
+<div class="placeholder">🎧</div>
+{% endif %}
+<h2>{{ dj.display_name or dj.username }}</h2>
+<p>{{ (dj.bio or 'Discover this DJ’s latest mixes on DJ MIX HUB.')|truncate(110) }}</p>
+<a class="profile-link" href="{{ url_for('public_dj_profile', dj_id=dj.id) }}">View DJ Profile →</a>
+</article>
+{% else %}
+<div class="empty">No DJs found. Try another search.</div>
+{% endfor %}
+</div>
+</main>
+</body>
+</html>

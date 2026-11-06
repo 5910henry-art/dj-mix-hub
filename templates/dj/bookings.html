@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Bookings | DJ MIX HUB</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:18px;background:#0b0a15;color:white;font-family:Arial,sans-serif}
+main{max-width:1150px;margin:auto}
+a{color:#c4a4ff;text-decoration:none}
+.card{background:#171526;border:1px solid #302944;border-radius:12px;padding:17px;margin:15px 0}
+.filters{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0}
+.filters a,button{padding:9px 12px;border:1px solid #51416d;border-radius:7px;background:#29213c;color:white;cursor:pointer}
+.filters .active,button{background:#793cff}
+.table-wrap{overflow-x:auto}
+table{width:100%;min-width:850px;border-collapse:collapse}
+th,td{text-align:left;vertical-align:top;padding:12px;border-bottom:1px solid #302944}
+th{color:#c4a4ff}
+select{padding:8px;background:#211b30;color:white;border:1px solid #51416d;border-radius:6px;margin:5px 0}
+.pending{color:#ffcc70}.confirmed{color:#7ee4a2}.completed{color:#9dbbff}.cancelled{color:#ff8585}
+.notice{color:#bda0ff}
+@media(max-width:600px){body{padding:10px}}
+</style>
+</head>
+<body>
+<main>
+<p><a href="{{ url_for('dj_dashboard') }}">← My Dashboard</a> ·
+<a href="{{ url_for('dj_booking_calendar') }}">My Calendar</a></p>
+<h1>📅 My Bookings</h1>
+<p>Only bookings assigned to {{ dj.display_name or dj.username }} are shown here.</p>
+
+{% with messages = get_flashed_messages() %}
+{% for message in messages %}<p class="notice">{{ message }}</p>{% endfor %}
+{% endwith %}
+
+<section class="card">
+<strong>Booking summary</strong>
+<p>Pending: {{ counts.pending }} · Confirmed: {{ counts.confirmed }}</p>
+<p>Completed: {{ counts.completed }} · Cancelled: {{ counts.cancelled }}</p>
+</section>
+
+<nav class="filters">
+<a class="{{ 'active' if status == 'all' else '' }}" href="{{ url_for('dj_manage_bookings') }}">All</a>
+{% for item in ['pending','confirmed','completed','cancelled'] %}
+<a class="{{ 'active' if status == item else '' }}" href="{{ url_for('dj_manage_bookings', status=item) }}">{{ item|title }}</a>
+{% endfor %}
+</nav>
+
+<section class="card table-wrap">
+<table>
+<thead><tr><th>Client</th><th>Event</th><th>Date</th><th>Venue</th><th>Budget</th><th>Message</th><th>Status</th><th>Update</th></tr></thead>
+<tbody>
+{% for booking in bookings %}
+<tr>
+<td>
+<strong>{{ booking.client_name }}</strong><br>{{ booking.phone }}<br>
+{% set whatsapp_phone = booking.phone|string|replace(' ','')|replace('+','')|replace('-','')|replace('(','')|replace(')','') %}
+{% if whatsapp_phone.startswith('0') and whatsapp_phone|length == 10 %}
+{% set whatsapp_phone = '254' ~ whatsapp_phone[1:] %}
+{% elif whatsapp_phone.startswith('254') %}
+{% set whatsapp_phone = whatsapp_phone %}
+{% elif whatsapp_phone|length == 9 and (whatsapp_phone.startswith('7') or whatsapp_phone.startswith('1')) %}
+{% set whatsapp_phone = '254' ~ whatsapp_phone %}
+{% endif %}
+<a href="https://wa.me/{{ whatsapp_phone }}?text={{ ('Hello ' ~ booking.client_name ~ ', thank you for contacting ' ~ (dj.display_name or dj.username) ~ ' about your ' ~ booking.event_type ~ ' on ' ~ booking.event_date.strftime('%d %b %Y') ~ ' at ' ~ booking.venue ~ '.')|urlencode }}" target="_blank" rel="noopener noreferrer">WhatsApp Client</a><br>
+{% if booking.status == 'confirmed' %}
+<a href="https://wa.me/{{ whatsapp_phone }}?text={{ ('Hello ' ~ booking.client_name ~ ', your booking with ' ~ (dj.display_name or dj.username) ~ ' is CONFIRMED! Event: ' ~ booking.event_type ~ '. Date: ' ~ booking.event_date.strftime('%d %b %Y') ~ '. Venue: ' ~ booking.venue ~ '.')|urlencode }}" target="_blank" rel="noopener noreferrer">Send Confirmation</a><br>
+{% endif %}
+{{ booking.email or 'No email' }}
+</td>
+<td>{{ booking.event_type }}</td>
+<td>{{ booking.event_date.strftime('%d %b %Y') }}</td>
+<td>{{ booking.venue }}</td>
+<td>{{ 'KES %.2f'|format(booking.budget) if booking.budget is not none else 'Not provided' }}</td>
+<td>{{ booking.message or '—' }}</td>
+<td class="{{ booking.status }}">{{ booking.status|title }}</td>
+<td>
+<form method="POST" action="{{ url_for('dj_update_booking_status', booking_id=booking.id) }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<select name="status">
+{% for item in ['pending','confirmed','completed','cancelled'] %}
+<option value="{{ item }}" {% if booking.status == item %}selected{% endif %}>{{ item|title }}</option>
+{% endfor %}
+</select><br><button type="submit">Save</button>
+</form>
+</td>
+</tr>
+{% else %}
+<tr><td colspan="8">No bookings assigned to you yet.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</section>
+</main>
+</body>
+</html>

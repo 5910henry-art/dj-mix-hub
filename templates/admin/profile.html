@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edit DJ Profile | DJ MIX HUB</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b0a15;color:white;font-family:Arial,sans-serif}
+header{padding:18px 5%;background:#151323;border-bottom:1px solid #302b42}
+header a{color:#c4a4ff;text-decoration:none;margin-right:18px}
+main{max-width:750px;margin:30px auto;padding:0 5%}
+.panel{background:#171526;border:1px solid #302b42;border-radius:15px;padding:25px}
+h1{font-size:30px}
+.subtitle{color:#aaa6bd;line-height:1.6}
+label{display:block;margin:22px 0 8px;font-weight:bold}
+input,textarea{width:100%;padding:13px;border-radius:8px;border:1px solid #51416d;background:#0e0d19;color:white;font-size:15px}
+textarea{min-height:150px;resize:vertical}
+.avatar{width:135px;height:135px;border-radius:50%;object-fit:cover;background:#29213c;margin-top:10px}
+.placeholder{width:135px;height:135px;border-radius:50%;display:grid;place-items:center;background:#29213c;color:#c4a4ff;font-size:50px;margin-top:10px}
+button{margin-top:25px;padding:14px 22px;border:0;border-radius:8px;background:linear-gradient(100deg,#793cff,#d33bba);color:white;font-weight:bold;font-size:16px;width:100%}
+.notice{color:#bda0ff;padding:12px;background:#29213c;border-radius:8px}
+.hint{font-size:13px;color:#aaa6bd}
+</style>
+</head>
+<body>
+<header>
+<a href="{{ url_for('admin_dashboard') }}">← Dashboard</a>
+<a href="{{ url_for('public_dj_profile', dj_id=dj.id) }}">View Public Profile ↗</a>
+</header>
+
+<main>
+<section class="panel">
+<h1>🎧 Edit DJ Profile</h1>
+<p class="subtitle">Manage how listeners see you on DJ MIX HUB.</p>
+
+{% with messages = get_flashed_messages() %}
+{% for message in messages %}
+<p class="notice">{{ message }}</p>
+{% endfor %}
+{% endwith %}
+
+<form method="POST" enctype="multipart/form-data">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+<label>Profile Photo</label>
+{% if dj.profile_image %}
+<img class="avatar" src="{{ url_for('uploaded_file', filename=dj.profile_image) }}" alt="Current profile photo">
+{% else %}
+<div class="placeholder">🎧</div>
+{% endif %}
+<input type="file" name="profile_image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+<p class="hint">JPG, JPEG, PNG or WEBP. Leave empty to keep your current photo.</p>
+
+<label for="display_name">DJ Display Name</label>
+<input id="display_name" name="display_name" maxlength="120" required value="{{ dj.display_name or '' }}" placeholder="e.g. DJ Jitiasque Unique">
+
+<label for="bio">Biography</label>
+<textarea id="bio" name="bio" placeholder="Tell listeners about your DJ journey, music style and experience...">{{ dj.bio or '' }}</textarea>
+
+
+<h2 style="margin-top:30px">🌐 Social Media Links</h2>
+<p class="hint">Add your social media pages so listeners can follow you.</p>
+
+<label for="youtube_url">YouTube Channel</label>
+<input type="url" id="youtube_url" name="youtube_url"
+       maxlength="500" value="{{ dj.youtube_url or '' }}"
+       placeholder="https://youtube.com/@yourchannel">
+
+<label for="instagram_url">Instagram</label>
+<input type="url" id="instagram_url" name="instagram_url"
+       maxlength="500" value="{{ dj.instagram_url or '' }}"
+       placeholder="https://instagram.com/yourusername">
+
+<label for="tiktok_url">TikTok</label>
+<input type="url" id="tiktok_url" name="tiktok_url"
+       maxlength="500" value="{{ dj.tiktok_url or '' }}"
+       placeholder="https://www.tiktok.com/@yourusername">
+
+<label for="facebook_url">Facebook</label>
+<input type="url" id="facebook_url" name="facebook_url"
+       maxlength="500" value="{{ dj.facebook_url or '' }}"
+       placeholder="https://facebook.com/yourpage">
+
+<p class="hint">Leave a field empty if you do not use that platform. Links must begin with http:// or https://.</p>
+
+<p class="hint">Your username, email and password will not be changed.</p>
+
+<button type="submit">Save DJ Profile</button>
+</form>
+</section>
+</main>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Listener Login | DJ MIX HUB</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .listener-auth {
+            max-width: 450px;
+            margin: 70px auto;
+            padding: 30px;
+            background: #191923;
+            border: 1px solid #343444;
+            border-radius: 18px;
+        }
+        .listener-auth h1 { color: white; }
+        .listener-auth p { color: #aaa; }
+        .listener-auth label {
+            display: block;
+            margin: 18px 0 7px;
+            color: #ddd;
+        }
+        .listener-auth input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            background: #101018;
+            color: white;
+            box-sizing: border-box;
+        }
+        .listener-auth button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 22px;
+            border: 0;
+            border-radius: 8px;
+            background: #d9a441;
+            color: #111;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .listener-auth a { color: #e5b64f; }
+        .listener-auth .messages { color: #ff9999; }
+    </style>
+</head>
+<body>
+    <main class="listener-auth">
+        <a href="/">← DJ MIX HUB</a>
+        <h1>Welcome back</h1>
+        <p>Log in to access your DJ MIX HUB account.</p>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <input type="hidden" name="csrf_token"
+                   value="{{ csrf_token() }}">
+
+            <label>Username or email</label>
+            <input type="text" name="username"
+                   required autocomplete="username">
+
+            <label>Password</label>
+            <input type="password" name="password"
+                   required autocomplete="current-password">
+
+            <button type="submit">Log In</button>
+        </form>
+
+        <p>New to DJ MIX HUB?
+            <a href="{{ url_for('listener_register') }}">Create an account</a>
+        </p>
+    </main>
+</body>
+</html>

@@ -1,0 +1,17 @@
+.env
+venv/
+__pycache__/
+*.py[cod]
+uploads/
+.pytest_cache/
+*.log
+*.before_*
+*.backup
+*.bak
+.venv/
+*.sql
+*.dump
+*.sqlite
+*.db
+.DS_Store
+create_admin.py

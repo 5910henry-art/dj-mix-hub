@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manage Bookings | DJ MIX HUB</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #0b0a15;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        main { max-width: 1200px; margin: auto; }
+
+        a { color: #c4a4ff; text-decoration: none; }
+
+        .card {
+            background: #171526;
+            border: 1px solid #302944;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 18px;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .filters a, button {
+            padding: 10px 14px;
+            border: 1px solid #51416d;
+            border-radius: 7px;
+            background: #29213c;
+            color: white;
+            cursor: pointer;
+        }
+
+        .filters a.active { background: #793cff; }
+
+        .table-wrap { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            min-width: 850px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 13px;
+            text-align: left;
+            vertical-align: top;
+            border-bottom: 1px solid #302944;
+        }
+
+        th { color: #c4a4ff; }
+
+        select {
+            padding: 9px;
+            background: #211b30;
+            color: white;
+            border: 1px solid #51416d;
+            border-radius: 6px;
+            margin-bottom: 7px;
+        }
+
+        button { background: #793cff; }
+
+        .notice { color: #bda0ff; }
+
+        .empty { color: #aaa6bd; }
+
+        .pending { color: #ffcc70; }
+        .confirmed { color: #7ee4a2; }
+        .completed { color: #9dbbff; }
+        .cancelled { color: #ff8585; }
+
+        @media (max-width: 600px) {
+            body { padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <p><a href="{{ url_for('admin_dashboard') }}">← Dashboard</a></p>
+
+    <h1>📅 Manage DJ Bookings</h1>
+    <p>Review client requests and manage event bookings.</p>
+
+    {% with messages = get_flashed_messages() %}
+        {% for message in messages %}
+            <p class="notice">{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <section class="card">
+        <strong>Booking summary</strong>
+        <p>Pending: {{ counts.pending }}</p>
+        <p>Confirmed: {{ counts.confirmed }}</p>
+        <p>Completed: {{ counts.completed }}</p>
+        <p>Cancelled: {{ counts.cancelled }}</p>
+    </section>
+
+    <nav class="filters">
+        <a href="{{ url_for('admin_manage_bookings') }}"
+           class="{{ 'active' if status == 'all' else '' }}">
+            All
+        </a>
+
+        {% for item in ['pending', 'confirmed', 'completed', 'cancelled'] %}
+        <a href="{{ url_for('admin_manage_bookings', status=item) }}"
+           class="{{ 'active' if status == item else '' }}">
+            {{ item|title }}
+        </a>
+        {% endfor %}
+    </nav>
+
+    <section class="card">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Event</th>
+                        <th>Date</th>
+                        <th>Venue</th>
+                        <th>Budget</th>
+                        <th>Message</th>
+                        <th>Assigned DJ</th>
+                        <th>Status</th>
+                        <th>Update</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>
+                            <strong>{{ booking.client_name }}</strong><br>
+                            {{ booking.phone }}<br>
+
+                            {% set whatsapp_phone = booking.phone|string
+                                |replace(' ', '')
+                                |replace('+', '')
+                                |replace('-', '')
+                                |replace('(', '')
+                                |replace(')', '') %}
+
+                            {% if whatsapp_phone.startswith('0') and whatsapp_phone|length == 10 %}
+                                {% set whatsapp_phone = '254' ~ whatsapp_phone[1:] %}
+                            {% elif whatsapp_phone.startswith('254') %}
+                                {% set whatsapp_phone = whatsapp_phone %}
+                            {% elif whatsapp_phone|length == 9 and (whatsapp_phone.startswith('7') or whatsapp_phone.startswith('1')) %}
+                                {% set whatsapp_phone = '254' ~ whatsapp_phone %}
+                            {% endif %}
+
+                            {% set whatsapp_message = 'Hello ' ~ booking.client_name ~ ', thank you for contacting DJ Jitiasque Unique about your ' ~ booking.event_type ~ ' on ' ~ booking.event_date.strftime('%d %b %Y') ~ ' at ' ~ booking.venue ~ '. I would like to discuss your booking.' %}
+
+                            <a href="https://wa.me/{{ whatsapp_phone }}?text={{ whatsapp_message|urlencode }}"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               style="display:inline-block;background:#25D366;color:white;padding:7px 12px;border-radius:6px;text-decoration:none;font-size:13px;margin:6px 0;">
+                                WhatsApp Client
+                            </a><br>
+
+                            {% if booking.status == 'confirmed' %}
+                                {% set confirmation_message =
+                                    'Hello ' ~ booking.client_name ~
+                                    ', your DJ booking with DJ Jitiasque Unique is CONFIRMED!' ~
+                                    ' Event: ' ~ booking.event_type ~
+                                    '. Date: ' ~ booking.event_date.strftime('%d %b %Y') ~
+                                    '. Venue: ' ~ booking.venue ~
+                                    '. Thank you for choosing us. We look forward to making your event special!'
+                                %}
+
+                                <a href="https://wa.me/{{ whatsapp_phone }}?text={{ confirmation_message|urlencode }}"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   style="display:inline-block;background:#128C7E;color:white;padding:7px 12px;border-radius:6px;text-decoration:none;font-size:13px;margin:4px 0;">
+                                    Send Confirmation
+                                </a><br>
+                            {% endif %}
+
+                            {{ booking.email or 'No email' }}
+                        </td>
+
+                        <td>{{ booking.event_type }}</td>
+
+                        <td>{{ booking.event_date.strftime('%d %b %Y') }}</td>
+
+                        <td>{{ booking.venue }}</td>
+
+                        <td>
+                            {% if booking.budget is not none %}
+                                KES {{ "%.2f"|format(booking.budget) }}
+                            {% else %}
+                                Not provided
+                            {% endif %}
+                        </td>
+
+                        <td>{{ booking.message or '—' }}</td>
+
+                        <td>
+                            <strong>
+                                {{ (booking.dj.display_name or booking.dj.username) if booking.dj else 'Unassigned' }}
+                            </strong>
+                            <form method="POST"
+                                  action="{{ url_for('admin_assign_booking', booking_id=booking.id) }}">
+                                <input type="hidden" name="csrf_token"
+                                       value="{{ csrf_token() }}">
+                                <select name="dj_id">
+                                    <option value="">Unassigned</option>
+                                    {% for dj in djs %}
+                                    <option value="{{ dj.id }}"
+                                        {% if booking.dj_id == dj.id %}selected{% endif %}>
+                                        {{ dj.display_name or dj.username }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit">Assign</button>
+                            </form>
+                        </td>
+
+                        <td>
+                            <span class="{{ booking.status }}">
+                                {{ booking.status|title }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <form method="POST"
+                                  action="{{ url_for('admin_update_booking_status', booking_id=booking.id) }}">
+                                <input type="hidden"
+                                       name="csrf_token"
+                                       value="{{ csrf_token() }}">
+
+                                <select name="status">
+                                    {% for item in ['pending', 'confirmed', 'completed', 'cancelled'] %}
+                                    <option value="{{ item }}"
+                                        {% if booking.status == item %}selected{% endif %}>
+                                        {{ item|title }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+
+                                <button type="submit">Save</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="empty">
+                            No booking requests found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>

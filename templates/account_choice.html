@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ 'Login' if mode == 'login' else 'Register' }} | DJ MIX HUB</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background: #0b0a15;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .container { width: 100%; max-width: 650px; }
+        h1 { text-align: center; }
+        .subtitle { text-align: center; color: #aaa6bd; line-height: 1.6; }
+        .choices {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-top: 30px;
+        }
+        .choice {
+            display: block;
+            padding: 28px 20px;
+            text-align: center;
+            text-decoration: none;
+            color: white;
+            background: #171526;
+            border: 1px solid #51416d;
+            border-radius: 14px;
+        }
+        .choice:hover { border-color: #bda0ff; }
+        .choice .emoji { font-size: 42px; }
+        .choice h2 { margin-bottom: 10px; }
+        .choice p { color: #aaa6bd; line-height: 1.5; }
+        .action {
+            display: inline-block;
+            padding: 11px 20px;
+            margin-top: 10px;
+            border-radius: 8px;
+            background: linear-gradient(100deg, #793cff, #d33bba);
+            font-weight: bold;
+        }
+        .back { display: block; margin-top: 28px; text-align: center; color: #c4a4ff; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>{{ 'Welcome Back' if mode == 'login' else 'Join DJ MIX HUB' }}</h1>
+    <p class="subtitle">
+        {{ 'Choose how you want to log in.' if mode == 'login'
+           else 'Choose the type of account you want to create.' }}
+    </p>
+
+    <div class="choices">
+        <a class="choice" href="{{ url_for('dj_login') if mode == 'login' else url_for('dj_register') }}">
+            <div class="emoji">🎧</div>
+            <h2>DJ</h2>
+            <p>
+                {{ 'Log in to manage your DJ profile and mixes. Administrators can also log in here.'
+                   if mode == 'login'
+                   else 'Create a DJ account, upload mixes and build your audience.' }}
+            </p>
+            <span class="action">{{ 'DJ Login' if mode == 'login' else 'Register as DJ' }}</span>
+        </a>
+
+        <a class="choice" href="{{ url_for('listener_login') if mode == 'login' else url_for('listener_register') }}">
+            <div class="emoji">🎵</div>
+            <h2>Listener</h2>
+            <p>
+                {{ 'Log in to enjoy mixes and manage your favourites.'
+                   if mode == 'login'
+                   else 'Create a listener account to enjoy and save your favourite mixes.' }}
+            </p>
+            <span class="action">{{ 'Listener Login' if mode == 'login' else 'Register as Listener' }}</span>
+        </a>
+    </div>
+
+    <a class="back" href="{{ url_for('home') }}">← Back to homepage</a>
+</div>
+</body>
+</html>

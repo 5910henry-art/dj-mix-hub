@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101018">
+    <title>{{ mix.title }} | DJ MIX HUB</title>
+
+    <meta name="description"
+          content="{{ (mix.description or ('Listen to ' ~ mix.title ~ ' by ' ~ (mix.dj.display_name or mix.dj.username) ~ ' on DJ MIX HUB. Stream and download this DJ mix.')) | striptags | truncate(155, True, '') }}">
+
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ request.url }}">
+
+    <meta property="og:type" content="music.song">
+    <meta property="og:site_name" content="DJ MIX HUB">
+    <meta property="og:title" content="{{ mix.title }} | DJ MIX HUB">
+    <meta property="og:description"
+          content="{{ (mix.description or ('Listen to ' ~ mix.title ~ ' by ' ~ (mix.dj.display_name or mix.dj.username))) | striptags | truncate(200, True, '') }}">
+    <meta property="og:url" content="{{ request.url }}">
+
+    {% if mix.cover_image %}
+        {% if mix.cover_image.startswith('http') %}
+        <meta property="og:image" content="{{ mix.cover_image }}">
+        <meta name="twitter:image" content="{{ mix.cover_image }}">
+        {% else %}
+        <meta property="og:image" content="{{ url_for('uploaded_file', filename=mix.cover_image, _external=True) }}">
+        <meta name="twitter:image" content="{{ url_for('uploaded_file', filename=mix.cover_image, _external=True) }}">
+        {% endif %}
+    {% endif %}
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ mix.title }} | DJ MIX HUB">
+    <meta name="twitter:description"
+          content="{{ (mix.description or 'Listen and download on DJ MIX HUB.') | striptags | truncate(200, True, '') }}">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<header class="navbar">
+    <a href="/" class="brand">🎧 DJ MIX <span>HUB</span></a>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/#genres">Genres</a>
+        <a href="/#latest">Latest Mixes</a>
+    </nav>
+    <a href="/#latest" class="nav-button">Explore Mixes</a>
+</header>
+
+<main>
+    <section class="section mix-detail">
+        <a href="/" class="back-link">← Back to Home</a>
+
+        <div class="detail-card">
+            <div class="detail-cover">
+                {% if mix.cover_image %}
+                    {% if mix.cover_image.startswith('http') %}
+                    <img src="{{ mix.cover_image }}" alt="{{ mix.title }}">
+                    {% else %}
+                    <img src="{{ url_for('uploaded_file', filename=mix.cover_image) }}"
+                         alt="{{ mix.title }}">
+                    {% endif %}
+                {% else %}
+                <div class="cover-placeholder">
+                    <span>♫</span>
+                    <small>DJ MIX HUB</small>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="detail-info">
+                <p class="eyebrow">NOW PLAYING</p>
+                <h1>{{ mix.title }}</h1>
+
+                <p class="dj-name">
+                    DJ: {{ mix.dj.display_name or mix.dj.username }}
+                </p>
+
+                {% if mix.genre %}
+                <span class="genre-tag">{{ mix.genre.name }}</span>
+                {% endif %}
+
+                <div class="mix-stats">
+                    <span>▶ {{ mix.plays }} plays</span>
+                    <span>↓ {{ mix.downloads }} downloads</span>
+                </div>
+
+                <audio controls preload="none"
+                       src="{{ url_for('stream_mix', mix_id=mix.id) }}">
+                    Your browser does not support audio playback.
+                </audio>
+
+                <a class="download-button"
+                   href="{{ url_for('download_mix', mix_id=mix.id) }}">
+                    ↓ Download Mix
+                </a>
+
+                {% if listener %}
+                    <form action="{{ url_for('toggle_favorite', mix_id=mix.id) }}"
+                          method="POST" class="favorite-form">
+                        <input type="hidden" name="csrf_token"
+                               value="{{ csrf_token() }}">
+                        <button type="submit" class="favorite-button">
+                            {{ "💔 Remove from Favourites" if is_favorite else "❤️ Add to Favourites" }}
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{{ url_for('listener_login') }}"
+                       class="favorite-button">
+                        ❤️ Login to Save Favourite
+                    </a>
+                {% endif %}
+
+                <div class="mix-sharing">
+                    <h3>📲 Share this Mix</h3>
+
+                    <div class="share-buttons">
+                        <a class="share-whatsapp"
+                           href="https://wa.me/?text={{ (mix.title ~ ' by ' ~ (mix.dj.display_name or mix.dj.username) ~ ' - ' ~ request.url)|urlencode }}"
+                           target="_blank" rel="noopener noreferrer">
+                            WhatsApp
+                        </a>
+
+                        <a class="share-facebook"
+                           href="https://www.facebook.com/sharer/sharer.php?u={{ request.url|urlencode }}"
+                           target="_blank" rel="noopener noreferrer">
+                            Facebook
+                        </a>
+
+                        <button type="button" class="share-copy"
+                                onclick="copyMixLink(this)">
+                            Copy Link
+                        </button>
+
+                        <button type="button" class="share-native"
+                                onclick="shareMix()">
+                            Share
+                        </button>
+                    </div>
+                    <p id="share-message" aria-live="polite"></p>
+                </div>
+
+                <div class="detail-description">
+                    <h3>About this mix</h3>
+                    <p>{{ mix.description or "Enjoy this mix from DJ MIX HUB." }}</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% if related_mixes %}
+    <section class="section">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">MORE MUSIC</p>
+                <h2>Related Mixes</h2>
+            </div>
+        </div>
+
+        <div class="mix-grid">
+            {% for item in related_mixes %}
+            <article class="mix-card">
+                <a class="detail-related-cover"
+                   href="{{ url_for('mix_detail', mix_id=item.id) }}">
+                    {% if item.cover_image %}
+                        {% if item.cover_image.startswith('http') %}
+                        <img src="{{ item.cover_image }}" alt="{{ item.title }}">
+                        {% else %}
+                        <img src="{{ url_for('uploaded_file', filename=item.cover_image) }}"
+                             alt="{{ item.title }}">
+                        {% endif %}
+                    {% else %}
+                    <div class="cover-placeholder">
+                        <span>♫</span>
+                        <small>DJ MIX HUB</small>
+                    </div>
+                    {% endif %}
+                </a>
+
+                <div class="mix-info">
+                    <h3>
+                        <a href="{{ url_for('mix_detail', mix_id=item.id) }}">
+                            {{ item.title }}
+                        </a>
+                    </h3>
+                    <p class="dj-name">
+                        {{ item.dj.display_name or item.dj.username }}
+                    </p>
+                    <a class="download-button"
+                       href="{{ url_for('mix_detail', mix_id=item.id) }}">
+                        View Mix →
+                    </a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</main>
+
+<footer>
+    <a href="/" class="brand">🎧 DJ MIX <span>HUB</span></a>
+    <p>Listen. Discover. Download.</p>
+    <small>© 2026 DJ MIX HUB. All rights reserved.</small>
+</footer>
+
+
+<script>
+function copyMixLink(button) {
+    const link = window.location.href;
+    const message = document.getElementById("share-message");
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(link).then(() => {
+            message.textContent = "Mix link copied!";
+        }).catch(() => {
+            message.textContent = "Could not copy automatically. Copy the page address.";
+        });
+    } else {
+        message.textContent = "Copy the mix address from your browser.";
+    }
+}
+
+function shareMix() {
+    const data = {
+        title: document.title,
+        text: "Listen to this mix on DJ MIX HUB",
+        url: window.location.href
+    };
+
+    if (navigator.share) {
+        navigator.share(data).catch(() => {});
+    } else {
+        document.getElementById("share-message").textContent =
+            "Use WhatsApp or Facebook to share this mix.";
+    }
+}
+</script>
+\n</body>
+</html>

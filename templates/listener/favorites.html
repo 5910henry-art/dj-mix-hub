@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Favourite Mixes | DJ MIX HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .favorites-page {
+            max-width: 1150px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .favorites-header {
+            margin-bottom: 30px;
+        }
+        .favorites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 22px;
+        }
+        .favorite-card {
+            background: #171717;
+            color: white;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 5px 18px rgba(0,0,0,.2);
+        }
+        .favorite-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+        .favorite-info {
+            padding: 16px;
+        }
+        .favorite-info h3 {
+            margin: 0 0 8px;
+        }
+        .favorite-info p {
+            color: #bbb;
+        }
+        .favorite-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 15px;
+        }
+        .favorite-actions a,
+        .favorite-actions button {
+            border: 0;
+            border-radius: 20px;
+            padding: 9px 13px;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .listen-btn {
+            background: #e91e63;
+            color: white;
+        }
+        .download-btn {
+            background: #333;
+            color: white;
+        }
+        .remove-btn {
+            background: #6b2020;
+            color: white;
+        }
+        .empty-favorites {
+            padding: 45px 20px;
+            text-align: center;
+            background: #171717;
+            color: white;
+            border-radius: 14px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<main class="favorites-page">
+    <a class="back-link" href="{{ url_for('listener_profile') }}">← My Account</a>
+
+    <div class="favorites-header">
+        <h1>❤️ My Favourite Mixes</h1>
+        <p>Your personal collection of saved DJ mixes.</p>
+        <p>Total saved: <strong>{{ favorites|length }}</strong></p>
+    </div>
+
+    {% if favorites %}
+        <div class="favorites-grid">
+            {% for favorite in favorites %}
+                {% set mix = favorite.mix %}
+                <article class="favorite-card">
+                    {% if mix.cover_image %}
+                        {% if mix.cover_image.startswith('http') %}
+                            <img src="{{ mix.cover_image }}" alt="{{ mix.title }}">
+                        {% else %}
+                            <img src="{{ url_for('uploaded_file', filename=mix.cover_image) }}" alt="{{ mix.title }}">
+                        {% endif %}
+                    {% endif %}
+
+                    <div class="favorite-info">
+                        <h3>{{ mix.title }}</h3>
+                        <p>DJ: {{ mix.dj.display_name or mix.dj.username }}</p>
+
+                        <div class="favorite-actions">
+                            <a class="listen-btn"
+                               href="{{ url_for('mix_detail', mix_id=mix.id) }}">
+                                Listen
+                            </a>
+
+                            <a class="download-btn"
+                               href="{{ url_for('download_mix', mix_id=mix.id) }}">
+                                Download
+                            </a>
+
+                            <form action="{{ url_for('toggle_favorite', mix_id=mix.id) }}"
+                                  method="POST">
+                                <input type="hidden" name="csrf_token"
+                                       value="{{ csrf_token() }}">
+                                <button class="remove-btn" type="submit">
+                                    Remove ❤️
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-favorites">
+            <h2>No favourite mixes yet</h2>
+            <p>Explore DJ MIX HUB and save the mixes you love.</p>
+            <a class="listen-btn" href="{{ url_for('home') }}">
+                Explore Mixes
+            </a>
+        </div>
+    {% endif %}
+</main>
+
+</body>
+</html>

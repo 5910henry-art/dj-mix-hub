@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Manage DJ Accounts | DJ MIX HUB</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; background: #0b0a15; color: #fff; font-family: Arial, sans-serif; }
+        header { padding: 20px 5%; background: #151323; border-bottom: 1px solid #29243e; }
+        main { max-width: 1100px; margin: auto; padding: 28px 5%; }
+        a { color: #c4a4ff; text-decoration: none; }
+        .note { color: #aaa6bd; line-height: 1.5; }
+        .table-wrap { overflow-x: auto; background: #171526; border: 1px solid #2c2742; border-radius: 12px; }
+        table { width: 100%; min-width: 720px; border-collapse: collapse; }
+        th, td { padding: 14px; text-align: left; border-bottom: 1px solid #302b42; }
+        th { color: #bda0ff; }
+        .active { color: #7ee4a2; font-weight: bold; }
+        .suspended { color: #ff9b9b; font-weight: bold; }
+        button { border: 0; border-radius: 7px; padding: 9px 12px; color: white; cursor: pointer; font-weight: bold; }
+        .suspend { background: #8d303d; }
+        .activate { background: #176b43; }
+        .back { display: inline-block; margin-bottom: 18px; }
+        .empty { color: #aaa6bd; padding: 20px; }
+        .flash { color: #bda0ff; }
+    </style>
+</head>
+<body>
+<header><h2>🎧 DJ MIX HUB — Manage DJ Accounts</h2></header>
+<main>
+    <a class="back" href="{{ url_for('admin_dashboard') }}">← Back to dashboard</a>
+    <h1>DJ Accounts</h1>
+    <p class="note">
+        DJ registration is automatic. Active DJs manage their own profiles
+        and mixes. You can suspend or reactivate an account here.
+        Suspending an account does not delete its profile or mixes.
+    </p>
+
+    {% with messages = get_flashed_messages() %}
+        {% for message in messages %}
+            <p class="flash">{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    {% if djs %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>DJ</th><th>Username</th><th>Email</th>
+                    <th>Joined</th><th>Status</th><th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for dj in djs %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('public_dj_profile', dj_id=dj.id) }}">
+                            {{ dj.display_name or dj.username }}
+                        </a>
+                    </td>
+                    <td>{{ dj.username }}</td>
+                    <td>{{ dj.email }}</td>
+                    <td>{{ dj.created_at.strftime('%d %b %Y') if dj.created_at else '—' }}</td>
+                    <td>
+                        <span class="{{ 'active' if dj.is_approved else 'suspended' }}">
+                            {{ 'Active' if dj.is_approved else 'Suspended' }}
+                        </span>
+                    </td>
+                    <td>
+                        <form method="POST"
+                              action="{{ url_for('admin_toggle_dj_status', dj_id=dj.id) }}"
+                              onsubmit="return confirm('Change this DJ account status?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="{{ 'suspend' if dj.is_approved else 'activate' }}"
+                                    type="submit">
+                                {{ 'Suspend' if dj.is_approved else 'Reactivate' }}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="empty">No DJ accounts have registered yet.</p>
+    {% endif %}
+</main>
+</body>
+</html>

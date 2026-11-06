@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Upload Mix | DJ MIX HUB</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 25px 15px;
+            background: #0b0a15;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 650px;
+            margin: 30px auto;
+            padding: 28px;
+            background: #171526;
+            border: 1px solid #302a45;
+            border-radius: 16px;
+        }
+        h1 { margin-top: 0; }
+        label { display: block; margin: 20px 0 8px; }
+        input, textarea, select {
+            width: 100%;
+            padding: 13px;
+            border-radius: 8px;
+            border: 1px solid #39334f;
+            background: #0d0c18;
+            color: white;
+            font-size: 15px;
+        }
+        textarea { min-height: 110px; resize: vertical; }
+        .publish {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .publish input { width: auto; }
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 25px;
+            border: 0;
+            border-radius: 9px;
+            background: linear-gradient(100deg, #793cff, #d33bba);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .message { color: #ffaaaa; }
+        a { color: #c4a4ff; text-decoration: none; }
+        .hint { color: #aaa6bd; font-size: 13px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎧 Upload a DJ Mix</h1>
+    <p>Add a new mix to DJ MIX HUB.</p>
+
+    {% with messages = get_flashed_messages() %}
+        {% for message in messages %}
+            <p class="message">{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <label for="title">Mix title *</label>
+        <input id="title" name="title" maxlength="180" required
+               placeholder="e.g. Nairobi Weekend Party Mix">
+
+        <label for="description">Description</label>
+        <textarea id="description" name="description"
+                  placeholder="Describe this mix..."></textarea>
+
+        <label for="genre_id">Genre</label>
+        <select id="genre_id" name="genre_id">
+            <option value="">Choose a genre</option>
+            {% for genre in genres %}
+                <option value="{{ genre.id }}">{{ genre.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="audio_file">MP3 audio file *</label>
+        <input id="audio_file" type="file" name="audio_file"
+               accept=".mp3,audio/mpeg" required>
+        <p class="hint">MP3 only. Maximum request size: 100 MB.</p>
+
+        <label for="cover_image">Cover artwork</label>
+        <input id="cover_image" type="file" name="cover_image"
+               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+        <p class="hint">JPG, PNG or WEBP. Optional.</p>
+
+        <label class="publish">
+            <input type="checkbox" name="is_published" checked>
+            Publish immediately
+        </label>
+
+        <button type="submit">Upload Mix</button>
+    </form>
+
+    <p style="margin-top:25px">
+        <a href="{{ url_for('admin_dashboard') }}">← Back to dashboard</a>
+    </p>
+</div>
+</body>
+</html>
