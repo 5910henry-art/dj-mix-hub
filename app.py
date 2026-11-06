@@ -71,7 +71,7 @@ def create_app():
         "UPLOAD_FOLDER",
         os.path.join(app.root_path, "uploads")
     )
-    app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
+    app.config["MAX_CONTENT_LENGTH"] = 250 * 1024 * 1024
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
     db.init_app(app)
