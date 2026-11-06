@@ -74,6 +74,16 @@
                 and enjoy your favourite music.
             </p>
 
+            <div class="pwa-install-container" id="pwaInstallContainer">
+                <button type="button" id="pwaInstallButton"
+                        class="pwa-install-button">
+                    <span aria-hidden="true">⬇</span>
+                    Install DJ MIX HUB
+                </button>
+                <p id="pwaInstallHelp" class="pwa-install-help"
+                   role="status" hidden></p>
+            </div>
+
             <form action="/" method="GET" class="search-form">
                 <input type="search" name="q"
                        value="{{ search }}"
@@ -288,5 +298,7 @@ if ("serviceWorker" in navigator) {
     });
 }
 </script>
+<script src="{{ url_for('static', filename='js/pwa-install.js') }}"
+        defer></script>
 </body>
 </html>
