@@ -207,3 +207,113 @@ def stream_cover(filename):
     response.headers["Content-Disposition"] = f'inline; filename="{filename}"'
     response.headers["X-Content-Type-Options"] = "nosniff"
     return response
+
+
+def _validate_image_key(filename):
+    if not filename or "\\" in filename:
+        raise ValueError("Invalid image filename.")
+
+    folder, separator, basename = filename.partition("/")
+
+    if (
+        folder not in {"djs", "ads"}
+        or not separator
+        or not basename
+        or "/" in basename
+        or basename in {".", ".."}
+    ):
+        raise ValueError("Invalid image storage path.")
+
+    return filename
+
+
+def upload_image(file_object, filename):
+    import mimetypes
+
+    filename = _validate_image_key(filename)
+    content_type = (
+        mimetypes.guess_type(filename)[0]
+        or "application/octet-stream"
+    )
+
+    filebase_client().upload_fileobj(
+        file_object,
+        os.environ["FILEBASE_BUCKET"],
+        filename,
+        ExtraArgs={
+            "ContentType": content_type,
+            "CacheControl": "public, max-age=3600"
+        }
+    )
+
+
+def delete_image(filename):
+    if not filebase_enabled():
+        return
+
+    filename = _validate_image_key(filename)
+
+    filebase_client().delete_object(
+        Bucket=os.environ["FILEBASE_BUCKET"],
+        Key=filename
+    )
+
+
+def stream_image(filename):
+    filename = _validate_image_key(filename)
+
+    client = filebase_client()
+    bucket = os.environ["FILEBASE_BUCKET"]
+
+    from botocore.exceptions import ClientError
+
+    try:
+        info = client.head_object(
+            Bucket=bucket,
+            Key=filename
+        )
+        result = client.get_object(
+            Bucket=bucket,
+            Key=filename
+        )
+    except ClientError as error:
+        error_info = error.response.get("Error", {})
+        status_code = error.response.get(
+            "ResponseMetadata", {}
+        ).get("HTTPStatusCode")
+        error_code = error_info.get("Code")
+
+        if status_code == 404 or error_code in {
+            "404", "NoSuchKey", "NotFound"
+        }:
+            abort(404)
+
+        abort(503)
+    except Exception:
+        abort(503)
+
+    body = result["Body"]
+
+    def generate():
+        try:
+            for chunk in body.iter_chunks(chunk_size=64 * 1024):
+                if chunk:
+                    yield chunk
+        finally:
+            body.close()
+
+    response = Response(
+        stream_with_context(generate()),
+        content_type=info.get("ContentType")
+        or "application/octet-stream",
+        direct_passthrough=True
+    )
+
+    response.headers["Content-Length"] = str(info["ContentLength"])
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    response.headers["Content-Disposition"] = (
+        f'inline; filename="{filename.split("/")[-1]}"'
+    )
+    response.headers["X-Content-Type-Options"] = "nosniff"
+
+    return response

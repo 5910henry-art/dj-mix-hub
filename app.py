@@ -671,8 +671,10 @@ def create_app():
 
     @app.route("/uploads/<path:filename>")
     def uploaded_file(filename):
-        from models import Mix
-        from audio_storage import filebase_enabled, stream_cover
+        from models import Mix, DJ, Advertisement
+        from audio_storage import (
+            filebase_enabled, stream_cover, stream_image
+        )
 
         local_path = safe_join(app.config["UPLOAD_FOLDER"], filename)
         if local_path and os.path.isfile(local_path):
@@ -680,16 +682,30 @@ def create_app():
                 app.config["UPLOAD_FOLDER"], filename
             )
 
+        if not filebase_enabled():
+            return send_from_directory(
+                app.config["UPLOAD_FOLDER"], filename
+            )
+
         # Only database-linked mix covers may be read from Filebase.
-        if (
-            Mix.query.filter_by(cover_image=filename).first()
-            and filebase_enabled()
-        ):
+        if Mix.query.filter_by(cover_image=filename).first():
             return stream_cover(filename)
 
-        return send_from_directory(
-            app.config["UPLOAD_FOLDER"], filename
-        )
+        # Only database-linked DJ profile photos may be read remotely.
+        if (
+            filename.startswith("djs/")
+            and DJ.query.filter_by(profile_image=filename).first()
+        ):
+            return stream_image(filename)
+
+        # Only database-linked advertisement images may be read remotely.
+        if (
+            filename.startswith("ads/")
+            and Advertisement.query.filter_by(image_file=filename).first()
+        ):
+            return stream_image(filename)
+
+        abort(404)
 
 
     @app.route("/djs")
@@ -1328,51 +1344,118 @@ def create_app():
             if invalid:
                 return render_template("dj/profile.html", dj=dj)
 
+            from audio_storage import (
+                filebase_enabled, upload_image, delete_image
+            )
+
             photo = request.files.get("profile_image")
             new_photo = None
+            photo_uploaded_remote = False
 
             if photo and photo.filename:
-                ext = os.path.splitext(secure_filename(photo.filename))[1].lower()
+                ext = os.path.splitext(
+                    secure_filename(photo.filename)
+                )[1].lower()
+
                 if ext not in {".jpg", ".jpeg", ".png", ".webp"}:
                     flash("Profile photo must be JPG, PNG or WEBP.")
                     return render_template("dj/profile.html", dj=dj)
 
-                os.makedirs(os.path.join(app.config["UPLOAD_FOLDER"], "djs"), exist_ok=True)
                 new_photo = os.path.join("djs", uuid4().hex + ext)
-                photo_path = os.path.join(app.config["UPLOAD_FOLDER"], new_photo)
-                photo.save(photo_path)
 
             old_photo = dj.profile_image
 
             try:
+                if new_photo:
+                    if filebase_enabled():
+                        upload_image(photo.stream, new_photo)
+                        photo_uploaded_remote = True
+                    else:
+                        os.makedirs(
+                            os.path.join(app.config["UPLOAD_FOLDER"], "djs"),
+                            exist_ok=True
+                        )
+                        photo_path = os.path.join(
+                            app.config["UPLOAD_FOLDER"], new_photo
+                        )
+                        photo.save(photo_path)
+
                 dj.display_name = display_name
                 dj.bio = bio
+
                 for field, value in social_values.items():
                     setattr(dj, field, value)
+
                 if new_photo:
                     dj.profile_image = new_photo
 
                 db.session.commit()
 
-                if new_photo and old_photo:
-                    upload_folder = os.path.realpath(app.config["UPLOAD_FOLDER"])
-                    old_path = os.path.realpath(os.path.join(upload_folder, old_photo))
-                    if os.path.commonpath([upload_folder, old_path]) == upload_folder and os.path.isfile(old_path):
+                if new_photo and old_photo and old_photo != new_photo:
+                    if old_photo.startswith("djs/") and filebase_enabled():
+                        try:
+                            image_in_use = DJ.query.filter(
+                                DJ.profile_image == old_photo,
+                                DJ.id != dj.id,
+                            ).first()
+
+                            if not image_in_use:
+                                delete_image(old_photo)
+                        except Exception:
+                            app.logger.exception(
+                                "Could not remove old DJ photo from Filebase"
+                            )
+
+                    upload_folder = os.path.realpath(
+                        app.config["UPLOAD_FOLDER"]
+                    )
+                    old_path = os.path.realpath(
+                        os.path.join(upload_folder, old_photo)
+                    )
+
+                    if (
+                        os.path.commonpath([upload_folder, old_path])
+                        == upload_folder
+                        and os.path.isfile(old_path)
+                    ):
                         try:
                             os.remove(old_path)
                         except OSError:
-                            app.logger.exception("Could not remove old DJ photo")
+                            app.logger.exception(
+                                "Could not remove old DJ photo"
+                            )
 
                 flash("Your DJ profile has been updated.")
                 return redirect(url_for("dj_dashboard"))
 
             except Exception:
                 db.session.rollback()
+
                 if new_photo:
-                    new_path = os.path.realpath(os.path.join(app.config["UPLOAD_FOLDER"], new_photo))
-                    upload_folder = os.path.realpath(app.config["UPLOAD_FOLDER"])
-                    if os.path.commonpath([upload_folder, new_path]) == upload_folder and os.path.isfile(new_path):
-                        os.remove(new_path)
+                    if photo_uploaded_remote:
+                        try:
+                            delete_image(new_photo)
+                        except Exception:
+                            app.logger.exception(
+                                "Could not remove failed DJ photo upload"
+                            )
+                    else:
+                        new_path = os.path.realpath(
+                            os.path.join(
+                                app.config["UPLOAD_FOLDER"], new_photo
+                            )
+                        )
+                        upload_folder = os.path.realpath(
+                            app.config["UPLOAD_FOLDER"]
+                        )
+
+                        if (
+                            os.path.commonpath([upload_folder, new_path])
+                            == upload_folder
+                            and os.path.isfile(new_path)
+                        ):
+                            os.remove(new_path)
+
                 app.logger.exception("DJ profile update failed")
                 flash("Could not update your profile.")
 
@@ -1592,6 +1675,8 @@ def create_app():
     @app.route("/admin/profile", methods=["GET", "POST"])
     @admin_required
     def admin_edit_profile():
+        from models import DJ
+
         if request.method == "POST":
             display_name = request.form.get("display_name", "").strip()
             bio = request.form.get("bio", "").strip()
@@ -1632,8 +1717,13 @@ def create_app():
                 flash("Display name must be 120 characters or fewer.")
                 return redirect(url_for("admin_edit_profile"))
 
+            from audio_storage import (
+                filebase_enabled, upload_image, delete_image
+            )
+
             new_full_path = None
             new_relative_path = None
+            new_image_uploaded_remote = False
             old_image = current_user.profile_image
 
             try:
@@ -1645,16 +1735,20 @@ def create_app():
                         flash("Profile photo must be JPG, JPEG, PNG or WEBP.")
                         return redirect(url_for("admin_edit_profile"))
 
-                    folder = os.path.join(
-                        app.config["UPLOAD_FOLDER"], "djs"
-                    )
-                    os.makedirs(folder, exist_ok=True)
-
                     filename = f"{uuid4().hex}{extension}"
                     new_relative_path = f"djs/{filename}"
-                    new_full_path = os.path.join(folder, filename)
 
-                    image.save(new_full_path)
+                    if filebase_enabled():
+                        upload_image(image.stream, new_relative_path)
+                        new_image_uploaded_remote = True
+                    else:
+                        folder = os.path.join(
+                            app.config["UPLOAD_FOLDER"], "djs"
+                        )
+                        os.makedirs(folder, exist_ok=True)
+                        new_full_path = os.path.join(folder, filename)
+                        image.save(new_full_path)
+
                     current_user.profile_image = new_relative_path
 
                 current_user.display_name = display_name
@@ -1668,14 +1762,41 @@ def create_app():
             except Exception:
                 db.session.rollback()
 
+                if new_image_uploaded_remote and new_relative_path:
+                    try:
+                        delete_image(new_relative_path)
+                    except Exception:
+                        app.logger.exception(
+                            "Could not remove failed admin profile photo upload"
+                        )
+
                 if new_full_path and os.path.isfile(new_full_path):
-                    os.remove(new_full_path)
+                    try:
+                        os.remove(new_full_path)
+                    except OSError:
+                        app.logger.exception(
+                            "Could not remove failed admin profile photo"
+                        )
 
                 app.logger.exception("DJ profile update failed")
                 flash("Could not update your DJ profile.")
                 return redirect(url_for("admin_edit_profile"))
 
             if new_relative_path and old_image and old_image != new_relative_path:
+                if old_image.startswith("djs/") and filebase_enabled():
+                    try:
+                        image_in_use = DJ.query.filter(
+                            DJ.profile_image == old_image,
+                            DJ.id != current_user.id,
+                        ).first()
+
+                        if not image_in_use:
+                            delete_image(old_image)
+                    except Exception:
+                        app.logger.exception(
+                            "Could not remove old admin profile photo from Filebase"
+                        )
+
                 upload_folder = os.path.realpath(
                     app.config["UPLOAD_FOLDER"]
                 )
@@ -2561,17 +2682,26 @@ def create_app():
                 flash("End date cannot be before start date.")
                 return redirect(url_for("admin_create_ad"))
 
-            ads_folder = os.path.join(
-                app.config["UPLOAD_FOLDER"], "ads"
+            from audio_storage import (
+                filebase_enabled, upload_image, delete_image
             )
-            os.makedirs(ads_folder, exist_ok=True)
 
             filename = f"{uuid4().hex}{extension}"
-            relative_path = os.path.join("ads", filename).replace("\\", "/")
-            full_path = os.path.join(ads_folder, filename)
+            relative_path = f"ads/{filename}"
+            full_path = None
+            image_uploaded_remote = False
 
             try:
-                image.save(full_path)
+                if filebase_enabled():
+                    upload_image(image.stream, relative_path)
+                    image_uploaded_remote = True
+                else:
+                    ads_folder = os.path.join(
+                        app.config["UPLOAD_FOLDER"], "ads"
+                    )
+                    os.makedirs(ads_folder, exist_ok=True)
+                    full_path = os.path.join(ads_folder, filename)
+                    image.save(full_path)
 
                 ad = Advertisement(
                     advertiser_name=advertiser,
@@ -2591,8 +2721,23 @@ def create_app():
 
             except Exception:
                 db.session.rollback()
-                if os.path.isfile(full_path):
-                    os.remove(full_path)
+
+                if image_uploaded_remote:
+                    try:
+                        delete_image(relative_path)
+                    except Exception:
+                        app.logger.exception(
+                            "Could not remove failed advertisement image upload"
+                        )
+
+                if full_path and os.path.isfile(full_path):
+                    try:
+                        os.remove(full_path)
+                    except OSError:
+                        app.logger.exception(
+                            "Could not remove failed advertisement image"
+                        )
+
                 app.logger.exception("Advertisement creation failed")
                 flash("Could not save the advertisement.")
 
@@ -2642,8 +2787,13 @@ def create_app():
                 flash("End date cannot be before start date.")
                 return redirect(url_for("admin_edit_ad", ad_id=ad_id))
 
+            from audio_storage import (
+                filebase_enabled, upload_image, delete_image
+            )
+
             new_path = None
             new_full_path = None
+            new_image_uploaded_remote = False
             old_image = ad.image_file
 
             try:
@@ -2655,13 +2805,19 @@ def create_app():
                         flash("Banner must be JPG, JPEG, PNG or WEBP.")
                         return redirect(url_for("admin_edit_ad", ad_id=ad_id))
 
-                    ads_folder = os.path.join(app.config["UPLOAD_FOLDER"], "ads")
-                    os.makedirs(ads_folder, exist_ok=True)
-
                     filename = f"{uuid4().hex}{extension}"
-                    new_path = os.path.join("ads", filename).replace("\\", "/")
-                    new_full_path = os.path.join(ads_folder, filename)
-                    image.save(new_full_path)
+                    new_path = f"ads/{filename}"
+
+                    if filebase_enabled():
+                        upload_image(image.stream, new_path)
+                        new_image_uploaded_remote = True
+                    else:
+                        ads_folder = os.path.join(
+                            app.config["UPLOAD_FOLDER"], "ads"
+                        )
+                        os.makedirs(ads_folder, exist_ok=True)
+                        new_full_path = os.path.join(ads_folder, filename)
+                        image.save(new_full_path)
 
                     ad.image_file = new_path
 
@@ -2676,27 +2832,59 @@ def create_app():
             except Exception:
                 db.session.rollback()
 
+                if new_image_uploaded_remote and new_path:
+                    try:
+                        delete_image(new_path)
+                    except Exception:
+                        app.logger.exception(
+                            "Could not remove failed advertisement image upload"
+                        )
+
                 if new_full_path and os.path.isfile(new_full_path):
-                    os.remove(new_full_path)
+                    try:
+                        os.remove(new_full_path)
+                    except OSError:
+                        app.logger.exception(
+                            "Could not remove failed advertisement image"
+                        )
 
                 app.logger.exception("Advertisement update failed")
                 flash("Could not update the advertisement.")
                 return redirect(url_for("admin_edit_ad", ad_id=ad_id))
 
             if new_path and old_image != new_path:
-                upload_folder = os.path.realpath(app.config["UPLOAD_FOLDER"])
+                if old_image and old_image.startswith("ads/") and filebase_enabled():
+                    try:
+                        image_in_use = Advertisement.query.filter(
+                            Advertisement.image_file == old_image,
+                            Advertisement.id != ad.id,
+                        ).first()
+
+                        if not image_in_use:
+                            delete_image(old_image)
+                    except Exception:
+                        app.logger.exception(
+                            "Could not remove old advertisement image from Filebase"
+                        )
+
+                upload_folder = os.path.realpath(
+                    app.config["UPLOAD_FOLDER"]
+                )
                 old_full_path = os.path.realpath(
-                    os.path.join(upload_folder, old_image)
+                    os.path.join(upload_folder, old_image or "")
                 )
 
                 if (
-                    os.path.commonpath([upload_folder, old_full_path]) == upload_folder
+                    os.path.commonpath([upload_folder, old_full_path])
+                    == upload_folder
                     and os.path.isfile(old_full_path)
                 ):
                     try:
                         os.remove(old_full_path)
                     except OSError:
-                        app.logger.exception("Could not remove old advertisement image")
+                        app.logger.exception(
+                            "Could not remove old advertisement image"
+                        )
 
             flash("Advertisement updated successfully.")
             return redirect(url_for("admin_manage_ads"))
@@ -2728,6 +2916,7 @@ def create_app():
     @admin_required
     def admin_delete_ad(ad_id):
         from models import Advertisement
+        from audio_storage import filebase_enabled, delete_image
 
         ad = db.session.get(Advertisement, ad_id)
         if not ad:
@@ -2744,9 +2933,23 @@ def create_app():
             flash("Could not delete the advertisement.")
             return redirect(url_for("admin_manage_ads"))
 
+        if filename and filename.startswith("ads/") and filebase_enabled():
+            try:
+                image_in_use = Advertisement.query.filter(
+                    Advertisement.image_file == filename,
+                    Advertisement.id != ad_id,
+                ).first()
+
+                if not image_in_use:
+                    delete_image(filename)
+            except Exception:
+                app.logger.exception(
+                    "Could not remove advertisement image from Filebase"
+                )
+
         upload_folder = os.path.realpath(app.config["UPLOAD_FOLDER"])
         file_path = os.path.realpath(
-            os.path.join(upload_folder, filename)
+            os.path.join(upload_folder, filename or "")
         )
 
         if (
