@@ -6,3 +6,4 @@ gunicorn
 psycopg
 Flask-WTF
 boto3
+pywebpush==2.5.0

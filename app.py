@@ -78,6 +78,120 @@ def create_app():
     login_manager.init_app(app)
     csrf.init_app(app)
 
+    # Load the private VAPID key from the protected local file
+    # when it has not been supplied through the environment.
+    if not app.config.get("VAPID_PRIVATE_KEY"):
+        key_path = app.config.get("VAPID_PRIVATE_KEY_PATH")
+        if key_path and os.path.isfile(key_path):
+            try:
+                with open(key_path, "r", encoding="utf-8") as key_file:
+                    app.config["VAPID_PRIVATE_KEY"] = key_file.read().strip()
+                app.logger.info("VAPID private key loaded from configured file.")
+            except OSError:
+                app.logger.exception("Could not read configured VAPID key file.")
+
+    def send_mix_published_notification(mix):
+        """Send a push notification to all subscribed browsers."""
+        import json
+
+        from models import PushSubscription
+
+        private_key = app.config.get("VAPID_PRIVATE_KEY")
+        subject = app.config.get("VAPID_SUBJECT")
+
+        if not private_key or not subject:
+            app.logger.warning(
+                "Push notification skipped: VAPID configuration is incomplete."
+            )
+            return
+
+        try:
+            from pywebpush import webpush, WebPushException
+        except Exception:
+            app.logger.exception("Could not import the Web Push library.")
+            return
+
+        try:
+            subscriptions = PushSubscription.query.all()
+        except Exception:
+            db.session.rollback()
+            app.logger.exception(
+                "Could not load push subscriptions; mix publication remains successful."
+            )
+            return
+
+        expired_ids = []
+
+        dj_name = "A DJ"
+        try:
+            if mix.dj:
+                dj_name = mix.dj.display_name or mix.dj.username or dj_name
+        except Exception:
+            app.logger.exception("Could not read DJ details for push notification.")
+
+        payload = {
+            "title": "New mix on DJ MIX HUB",
+            "body": f"{mix.title} by {dj_name} is now available.",
+            "url": url_for("mix_detail", mix_id=mix.id)
+        }
+
+        sent = 0
+        failed = 0
+
+        for subscription in subscriptions:
+            try:
+                webpush(
+                    subscription_info={
+                        "endpoint": subscription.endpoint,
+                        "keys": {
+                            "p256dh": subscription.p256dh,
+                            "auth": subscription.auth
+                        }
+                    },
+                    data=json.dumps(payload),
+                    vapid_private_key=private_key,
+                    vapid_claims={"sub": subject}
+                )
+                sent += 1
+
+            except WebPushException as exc:
+                failed += 1
+                response = getattr(exc, "response", None)
+                status_code = getattr(response, "status_code", None)
+
+                if status_code in (404, 410):
+                    expired_ids.append(subscription.id)
+
+                app.logger.warning(
+                    "Push delivery failed for subscription %s (HTTP %s).",
+                    subscription.id,
+                    status_code or "unknown"
+                )
+
+            except Exception:
+                failed += 1
+                app.logger.exception(
+                    "Unexpected push delivery failure for subscription %s.",
+                    subscription.id
+                )
+
+        if expired_ids:
+            try:
+                PushSubscription.query.filter(
+                    PushSubscription.id.in_(expired_ids)
+                ).delete(synchronize_session=False)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                app.logger.exception("Could not remove expired push subscriptions.")
+
+        app.logger.info(
+            "Mix publication push completed: %s sent, %s failed, %s expired.",
+            sent,
+            failed,
+            len(expired_ids)
+        )
+
     login_manager.login_view = "admin_login"
     login_manager.login_message = "Please log in first."
 
@@ -239,6 +353,120 @@ def create_app():
         session.pop("listener_id", None)
         flash("You have been logged out.")
         return redirect(url_for("home"))
+
+
+    @app.route("/api/push/public-key", methods=["GET"])
+    def push_public_key():
+        public_key = app.config.get("VAPID_PUBLIC_KEY")
+        if not public_key:
+            return jsonify({"error": "Push notifications are not configured."}), 503
+        return jsonify({"publicKey": public_key})
+
+
+    @app.route("/api/push/subscribe", methods=["POST"])
+    def push_subscribe():
+        from models import PushSubscription, Listener
+
+        data = request.get_json(silent=True) or {}
+        endpoint = data.get("endpoint")
+        keys = data.get("keys") or {}
+        p256dh = keys.get("p256dh")
+        auth = keys.get("auth")
+
+        if (
+            not isinstance(endpoint, str)
+            or not endpoint.startswith("https://")
+            or len(endpoint) > 4096
+            or not isinstance(p256dh, str)
+            or not p256dh
+            or len(p256dh) > 512
+            or not isinstance(auth, str)
+            or not auth
+            or len(auth) > 512
+        ):
+            return jsonify({"error": "Invalid push subscription data."}), 400
+
+        listener_id = session.get("listener_id")
+        if listener_id and not db.session.get(Listener, listener_id):
+            session.pop("listener_id", None)
+            listener_id = None
+
+        dj_id = (
+            current_user.id
+            if current_user.is_authenticated
+            else None
+        )
+
+        try:
+            subscription = PushSubscription.query.filter_by(
+                endpoint=endpoint
+            ).first()
+
+            if subscription is None:
+                subscription = PushSubscription(endpoint=endpoint)
+                db.session.add(subscription)
+
+            subscription.p256dh = p256dh
+            subscription.auth = auth
+            subscription.listener_id = listener_id
+            subscription.dj_id = dj_id
+
+            db.session.commit()
+
+            return jsonify({
+                "success": True,
+                "message": "Push subscription saved."
+            }), 201
+
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Saving push subscription failed")
+            return jsonify({"error": "Could not save push subscription."}), 500
+
+
+    @app.route("/api/push/unsubscribe", methods=["POST"])
+    def push_unsubscribe():
+        from models import PushSubscription, Listener
+
+        data = request.get_json(silent=True) or {}
+        endpoint = data.get("endpoint")
+
+        if not isinstance(endpoint, str) or not endpoint.startswith("https://"):
+            return jsonify({"error": "Invalid subscription endpoint."}), 400
+
+        listener_id = session.get("listener_id")
+        if listener_id and not db.session.get(Listener, listener_id):
+            session.pop("listener_id", None)
+            listener_id = None
+
+        dj_id = (
+            current_user.id
+            if current_user.is_authenticated
+            else None
+        )
+
+        try:
+            subscription = PushSubscription.query.filter_by(
+                endpoint=endpoint
+            ).first()
+
+            if subscription is None:
+                return jsonify({"success": True}), 200
+
+            # The browser presents its own subscription endpoint.
+            # Allow removal even if the user has since logged in or out.
+            db.session.delete(subscription)
+            db.session.commit()
+
+            return jsonify({
+                "success": True,
+                "message": "Push subscription removed."
+            })
+
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Removing push subscription failed")
+            return jsonify({"error": "Could not remove push subscription."}), 500
 
 
     @app.route("/service-worker.js")
@@ -1081,10 +1309,20 @@ def create_app():
             id=mix_id, dj_id=current_user.id
         ).first_or_404()
 
-        mix.is_published = not mix.is_published
+        was_published = bool(mix.is_published)
+        mix.is_published = not was_published
 
         try:
             db.session.commit()
+
+            if not was_published and mix.is_published:
+                try:
+                    send_mix_published_notification(mix)
+                except Exception:
+                    app.logger.exception(
+                        "Push notification failed after DJ mix publication."
+                    )
+
             flash("Your mix is now published." if mix.is_published else "Your mix is now unpublished.")
         except Exception:
             db.session.rollback()
@@ -1580,6 +1818,14 @@ def create_app():
                 db.session.add(mix)
                 db.session.commit()
 
+                if mix.is_published:
+                    try:
+                        send_mix_published_notification(mix)
+                    except Exception:
+                        app.logger.exception(
+                            "Push notification failed after admin mix upload."
+                        )
+
                 flash("Mix uploaded successfully.")
                 return redirect(url_for("admin_dashboard"))
 
@@ -1711,8 +1957,17 @@ def create_app():
         if not mix:
             abort(404)
 
-        mix.is_published = not mix.is_published
+        was_published = bool(mix.is_published)
+        mix.is_published = not was_published
         db.session.commit()
+
+        if not was_published and mix.is_published:
+            try:
+                send_mix_published_notification(mix)
+            except Exception:
+                app.logger.exception(
+                    "Push notification failed after admin mix publication."
+                )
 
         flash(
             "Mix published." if mix.is_published

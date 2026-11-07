@@ -227,3 +227,45 @@ class AdvertisingPayment(db.Model):
     notes = db.Column(db.String(500))
     paid_on = db.Column(db.Date, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+class PushSubscription(db.Model):
+    __tablename__ = "push_subscriptions"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    endpoint = db.Column(
+        db.Text,
+        unique=True,
+        nullable=False
+    )
+
+    p256dh = db.Column(db.Text, nullable=False)
+    auth = db.Column(db.Text, nullable=False)
+
+    listener_id = db.Column(
+        db.Integer,
+        db.ForeignKey("listeners.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True
+    )
+
+    dj_id = db.Column(
+        db.Integer,
+        db.ForeignKey("djs.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False
+    )

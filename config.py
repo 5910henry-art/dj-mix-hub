@@ -14,6 +14,25 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     DB_SCHEMA = schema
+
+    VAPID_PUBLIC_KEY = os.getenv(
+        "VAPID_PUBLIC_KEY",
+        "BIbUKbsJEYYEEXLfy-A0wNC9Ihp3AqrkAVlpunJp8T8f0hMmrxizHqISeYHFVci83jMYTVQT_woGpi9Lfn7s67c"
+    )
+    VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY")
+    VAPID_PRIVATE_KEY_PATH = os.getenv(
+        "VAPID_PRIVATE_KEY_PATH",
+        os.path.join(
+            os.path.expanduser("~"),
+            ".config",
+            "dj-mix-hub",
+            "private_key.pem"
+        )
+    )
+    VAPID_SUBJECT = os.getenv(
+        "VAPID_SUBJECT",
+        "mailto:5910henry@gmail.com"
+    )
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,
         "pool_recycle": 300,

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#101018">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="DJ MIX HUB">
@@ -82,6 +83,17 @@
                 </button>
                 <p id="pwaInstallHelp" class="pwa-install-help"
                    role="status" hidden></p>
+            </div>
+
+            <div class="pwa-install-container" id="pushNotificationContainer">
+                <button type="button" id="pushNotificationButton"
+                        class="pwa-install-button">
+                    Enable new mix notifications
+                </button>
+                <p class="pwa-install-help" id="pushNotificationStatus"
+                   role="status" aria-live="polite">
+                    Get notified when a new DJ mix is published.
+                </p>
             </div>
 
             <form action="/" method="GET" class="search-form">
@@ -299,6 +311,8 @@ if ("serviceWorker" in navigator) {
 }
 </script>
 <script src="{{ url_for('static', filename='js/pwa-install.js') }}"
+        defer></script>
+<script src="{{ url_for('static', filename='js/push-notifications.js') }}"
         defer></script>
 </body>
 </html>

@@ -66,3 +66,54 @@ self.addEventListener("fetch", event => {
         );
     }
 });
+
+
+self.addEventListener("push", event => {
+    let data = {};
+
+    try {
+        data = event.data ? event.data.json() : {};
+    } catch (error) {
+        data = {
+            body: event.data
+                ? event.data.text()
+                : "A new mix is available."
+        };
+    }
+
+    event.waitUntil(
+        self.registration.showNotification(
+            data.title || "DJ MIX HUB",
+            {
+                body: data.body || "A new mix is available.",
+                icon: "/static/pwa/icon-192.png",
+                badge: "/static/pwa/icon-192.png",
+                data: { url: data.url || "/" }
+            }
+        )
+    );
+});
+
+self.addEventListener("notificationclick", event => {
+    event.notification.close();
+
+    const rawUrl =
+        (event.notification.data && event.notification.data.url) || "/";
+    const target = new URL(rawUrl, self.location.origin);
+
+    if (target.origin !== self.location.origin) return;
+
+    event.waitUntil(
+        self.clients.matchAll({
+            type: "window",
+            includeUncontrolled: true
+        }).then(windowClients => {
+            for (const client of windowClients) {
+                if (new URL(client.url).origin === self.location.origin) {
+                    return client.focus();
+                }
+            }
+            return self.clients.openWindow(target.href);
+        })
+    );
+});
