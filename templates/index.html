@@ -159,9 +159,19 @@
                 <p class="eyebrow">PARTNER WITH DJ MIX HUB</p>
                 <h2>Sponsored</h2>
             </div>
+            <div class="carousel-controls">
+                <button type="button" aria-label="Previous sponsored ads"
+                        aria-controls="sponsored-track"
+                        data-carousel-target="sponsored-track"
+                        data-scroll-direction="-1">‹</button>
+                <button type="button" aria-label="Next sponsored ads"
+                        aria-controls="sponsored-track"
+                        data-carousel-target="sponsored-track"
+                        data-scroll-direction="1">›</button>
+            </div>
         </div>
 
-        <div class="sponsored-grid">
+        <div class="sponsored-grid" id="sponsored-track">
             {% for ad in ads %}
             <article class="sponsored-card">
                 <span class="sponsored-label">SPONSORED</span>
@@ -229,11 +239,23 @@
                     {% if search %}Search Results{% else %}Latest Mixes{% endif %}
                 </h2>
             </div>
-            <span class="mix-count">{{ mixes|length }} mixes</span>
+            <div class="carousel-heading-actions">
+                <span class="mix-count">{{ mixes|length }} mixes</span>
+                <div class="carousel-controls">
+                    <button type="button" aria-label="Previous mixes"
+                            aria-controls="mixes-track"
+                            data-carousel-target="mixes-track"
+                            data-scroll-direction="-1">‹</button>
+                    <button type="button" aria-label="Next mixes"
+                            aria-controls="mixes-track"
+                            data-carousel-target="mixes-track"
+                            data-scroll-direction="1">›</button>
+                </div>
+            </div>
         </div>
 
         {% if mixes %}
-        <div class="mix-grid">
+        <div class="mix-grid" id="mixes-track">
             {% for mix in mixes %}
             <article class="mix-card">
                 <a href="{{ url_for('mix_detail', mix_id=mix.id) }}" class="mix-cover-link">
@@ -297,6 +319,42 @@
     <p>Listen. Discover. Download.</p>
     <small>© 2026 DJ MIX HUB. All rights reserved.</small>
 </footer>
+
+<script>
+document.querySelectorAll("[data-carousel-target]").forEach(function (button) {
+    const track = document.getElementById(button.dataset.carouselTarget);
+
+    if (!track) {
+        button.hidden = true;
+        return;
+    }
+
+    function updateCarouselControls() {
+        const canScroll = track.scrollWidth > track.clientWidth + 5;
+        track.parentElement.querySelectorAll(
+            '[data-carousel-target="' + track.id + '"]'
+        ).forEach(function (control) {
+            control.hidden = !canScroll;
+        });
+    }
+
+    button.addEventListener("click", function () {
+        const direction = Number(button.dataset.scrollDirection);
+
+        if (!direction) {
+            return;
+        }
+
+        track.scrollBy({
+            left: direction * track.clientWidth * 0.85,
+            behavior: "smooth"
+        });
+    });
+
+    updateCarouselControls();
+    window.addEventListener("resize", updateCarouselControls);
+});
+</script>
 
 <script>
 if ("serviceWorker" in navigator) {
