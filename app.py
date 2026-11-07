@@ -192,6 +192,127 @@ def create_app():
             len(expired_ids)
         )
 
+    def send_booking_created_notification(booking):
+        """Notify the selected DJ and subscribed admins about a new booking."""
+        import json
+
+        from models import DJ, PushSubscription
+
+        private_key = app.config.get("VAPID_PRIVATE_KEY")
+        subject = app.config.get("VAPID_SUBJECT")
+
+        if not private_key or not subject:
+            app.logger.warning("Booking push skipped: VAPID configuration is incomplete.")
+            return
+
+        try:
+            from pywebpush import webpush, WebPushException
+        except Exception:
+            app.logger.exception("Could not import Web Push library for booking notification.")
+            return
+
+        try:
+            recipients = {}
+
+            if booking.dj_id:
+                selected_dj = db.session.get(DJ, booking.dj_id)
+                dj_subscriptions = PushSubscription.query.filter_by(
+                    dj_id=booking.dj_id
+                ).all()
+
+                target = (
+                    url_for("admin_manage_bookings")
+                    if selected_dj and selected_dj.is_admin
+                    else url_for("dj_manage_bookings")
+                )
+
+                for subscription in dj_subscriptions:
+                    recipients[subscription.id] = (subscription, target)
+
+            admin_subscriptions = (
+                PushSubscription.query
+                .join(DJ, PushSubscription.dj_id == DJ.id)
+                .filter(DJ.is_admin.is_(True))
+                .all()
+            )
+
+            for subscription in admin_subscriptions:
+                recipients.setdefault(
+                    subscription.id,
+                    (subscription, url_for("admin_manage_bookings"))
+                )
+
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Could not load booking notification recipients.")
+            return
+
+        payload_base = {
+            "title": "New booking request",
+            "body": (
+                f"{booking.client_name} requested {booking.event_type} "
+                f"on {booking.event_date.isoformat()}."
+            )
+        }
+
+        expired_ids = []
+        sent = 0
+        failed = 0
+
+        for subscription, target_url in recipients.values():
+            payload = {**payload_base, "url": target_url}
+
+            try:
+                webpush(
+                    subscription_info={
+                        "endpoint": subscription.endpoint,
+                        "keys": {
+                            "p256dh": subscription.p256dh,
+                            "auth": subscription.auth
+                        }
+                    },
+                    data=json.dumps(payload),
+                    vapid_private_key=private_key,
+                    vapid_claims={"sub": subject}
+                )
+                sent += 1
+
+            except WebPushException as exc:
+                failed += 1
+                response = getattr(exc, "response", None)
+                status_code = getattr(response, "status_code", None)
+
+                if status_code in (404, 410):
+                    expired_ids.append(subscription.id)
+
+                app.logger.warning(
+                    "Booking push failed for subscription %s (HTTP %s).",
+                    subscription.id,
+                    status_code or "unknown"
+                )
+
+            except Exception:
+                failed += 1
+                app.logger.exception(
+                    "Unexpected booking push failure for subscription %s.",
+                    subscription.id
+                )
+
+        if expired_ids:
+            try:
+                PushSubscription.query.filter(
+                    PushSubscription.id.in_(expired_ids)
+                ).delete(synchronize_session=False)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                app.logger.exception("Could not remove expired booking push subscriptions.")
+
+        app.logger.info(
+            "Booking push completed: %s sent, %s failed, %s expired.",
+            sent, failed, len(expired_ids)
+        )
+
     login_manager.login_view = "admin_login"
     login_manager.login_message = "Please log in first."
 
@@ -877,6 +998,13 @@ def create_app():
 
             db.session.add(booking)
             db.session.commit()
+
+            try:
+                send_booking_created_notification(booking)
+            except Exception:
+                app.logger.exception(
+                    "Booking was saved, but its push notification failed."
+                )
 
             if selected_dj:
                 confirmation = (
