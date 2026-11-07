@@ -4,16 +4,16 @@
     const button = document.getElementById("pushNotificationButton");
     const status = document.getElementById("pushNotificationStatus");
 
-    if (!button || !status) return;
 
     const csrfMeta = document.querySelector('meta[name="csrf-token"]');
     const csrfToken = csrfMeta ? csrfMeta.content : "";
 
     function setStatus(message) {
-        status.textContent = message;
+        if (status) status.textContent = message;
     }
 
     function setSubscribedState(subscribed) {
+        if (!button) return;
         button.textContent = subscribed
             ? "Turn off notifications"
             : "Enable new mix notifications";
@@ -142,7 +142,7 @@
             !("PushManager" in window) ||
             !("Notification" in window)
         ) {
-            button.disabled = true;
+            if (button) button.disabled = true;
             setStatus("Push notifications are not supported by this browser.");
             return;
         }
@@ -155,6 +155,10 @@
             setSubscribedState(Boolean(subscription));
 
             if (subscription) {
+                // Booking dashboards refresh the subscription under the logged-in account.
+                if (!button) {
+                    await saveSubscription(subscription);
+                }
                 setStatus("Notifications are enabled for this browser.");
             } else if (Notification.permission === "denied") {
                 setStatus(
@@ -167,7 +171,7 @@
         }
     }
 
-    button.addEventListener("click", async function () {
+    if (button) button.addEventListener("click", async function () {
         button.disabled = true;
         setStatus("Updating notification settings...");
 
