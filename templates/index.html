@@ -165,7 +165,8 @@
             {% for ad in ads %}
             <article class="sponsored-card">
                 <span class="sponsored-label">SPONSORED</span>
-                <a href="{{ url_for('advertisement_click', ad_id=ad.id) }}"
+                <a class="sponsored-image-link"
+                   href="{{ url_for('advertisement_click', ad_id=ad.id) }}"
                    target="_blank" rel="noopener noreferrer">
                     <img src="{{ url_for('uploaded_file', filename=ad.image_file) }}"
                          alt="{{ ad.title }}">
