@@ -12,13 +12,34 @@
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='pwa/icon-192.png') }}">
     <title>DJ MIX HUB | Discover Your Sound</title>
     <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/style.css', v='book-dj-exact-youtube-size-20261109') }}">
+          href="{{ url_for('static', filename='css/style.css', v='public-listeners-carousel-20261109') }}">
 
     <style>
         .public-listener-grid {
-            display:grid;
-            grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
-            gap:16px;
+            display:flex;
+            gap:20px;
+            overflow-x:auto;
+            overflow-y:hidden;
+            padding:3px 2px 14px;
+            scroll-snap-type:x mandatory;
+            scroll-behavior:smooth;
+            -webkit-overflow-scrolling:touch;
+            scrollbar-width:none;
+        }
+        .public-listener-grid::-webkit-scrollbar {
+            display:none;
+        }
+        .public-listener-card {
+            flex:0 0 31%;
+            min-width:0;
+            scroll-snap-align:start;
+        }
+        @media (max-width:700px) {
+            .public-listener-grid { gap:14px; }
+            .public-listener-card { flex-basis:86%; }
+        }
+        @media (min-width:701px) and (max-width:950px) {
+            .public-listener-card { flex-basis:46%; }
         }
         .public-listener-card {
             display:block;
@@ -262,9 +283,19 @@
                 <h2>Public Listeners</h2>
                 <p>Discover music lovers in the DJ MIX HUB community.</p>
             </div>
+            <div class="carousel-controls">
+                <button type="button" aria-label="Previous public listeners"
+                        aria-controls="public-listeners-track"
+                        data-carousel-target="public-listeners-track"
+                        data-scroll-direction="-1">‹</button>
+                <button type="button" aria-label="Next public listeners"
+                        aria-controls="public-listeners-track"
+                        data-carousel-target="public-listeners-track"
+                        data-scroll-direction="1">›</button>
+            </div>
         </div>
 
-        <div class="public-listener-grid">
+        <div class="public-listener-grid" id="public-listeners-track">
             {% for public_listener in public_listeners %}
             <a class="public-listener-card"
                href="{{ url_for('public_listener_profile', username=public_listener.username) }}">
