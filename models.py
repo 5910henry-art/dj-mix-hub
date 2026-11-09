@@ -293,6 +293,13 @@ class ListenerPlaylist(db.Model):
 
     name = db.Column(db.String(100), nullable=False)
 
+    is_public = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False,
+        server_default=db.false()
+    )
+
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,

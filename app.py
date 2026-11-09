@@ -898,6 +898,89 @@ def create_app():
 
 
     @app.route(
+        "/listener/playlists/<int:playlist_id>/visibility",
+        methods=["POST"]
+    )
+    def update_listener_playlist_visibility(playlist_id):
+        from models import ListenerPlaylist
+
+        listener = get_playlist_listener()
+        if listener is None:
+            return redirect(url_for("listener_login"))
+
+        playlist = ListenerPlaylist.query.filter_by(
+            id=playlist_id,
+            listener_id=listener.id
+        ).first_or_404()
+
+        playlist.is_public = request.form.get("is_public") == "on"
+
+        try:
+            db.session.commit()
+            if playlist.is_public:
+                flash("Playlist is now public and can be shared.", "success")
+            else:
+                flash("Playlist is now private.", "success")
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Playlist visibility update failed")
+            flash("Could not update playlist visibility. Please try again.", "danger")
+
+        return redirect(
+            url_for("listener_playlist_detail", playlist_id=playlist.id)
+        )
+
+
+    @app.route("/playlists/<int:playlist_id>")
+    def public_listener_playlist(playlist_id):
+        from models import ListenerPlaylist, ListenerPlaylistItem, Mix
+
+        playlist = ListenerPlaylist.query.filter_by(
+            id=playlist_id,
+            is_public=True
+        ).first_or_404()
+
+        listener_owner = playlist.listener
+
+        # Expose only fields required by the public playlist page.
+        owner = {
+            "display_name": listener_owner.display_name,
+            "username": listener_owner.username,
+            "is_public": listener_owner.is_public,
+            "profile_image": listener_owner.profile_image,
+        }
+
+        items = db.session.query(
+            ListenerPlaylistItem,
+            Mix
+        ).join(
+            Mix,
+            ListenerPlaylistItem.mix_id == Mix.id
+        ).filter(
+            ListenerPlaylistItem.playlist_id == playlist.id,
+            Mix.is_published.is_(True)
+        ).order_by(
+            ListenerPlaylistItem.position.asc(),
+            ListenerPlaylistItem.added_at.asc()
+        ).all()
+
+        return render_template(
+            "listener/public_playlist.html",
+            playlist=playlist,
+            owner=owner,
+            items=items,
+            tracks=[
+                {
+                    "title": mix.title,
+                    "dj": mix.dj.display_name or mix.dj.username,
+                    "url": url_for("stream_mix", mix_id=mix.id)
+                }
+                for item, mix in items
+            ]
+        )
+
+
+    @app.route(
         "/listener/playlists/<int:playlist_id>/rename",
         methods=["POST"]
     )
@@ -1197,7 +1280,7 @@ def create_app():
 
     @app.route("/listeners/<string:username>")
     def public_listener_profile(username):
-        from models import Listener
+        from models import Listener, ListenerPlaylist
 
         public_listener = Listener.query.filter(
             Listener.username.ilike(username),
@@ -1206,6 +1289,13 @@ def create_app():
 
         if public_listener is None:
             abort(404)
+
+        public_playlists = ListenerPlaylist.query.filter_by(
+            listener_id=public_listener.id,
+            is_public=True
+        ).order_by(
+            ListenerPlaylist.updated_at.desc()
+        ).all()
 
         profile = {
             "username": public_listener.username,
@@ -1216,7 +1306,18 @@ def create_app():
             "tiktok_url": public_listener.tiktok_url,
             "facebook_url": public_listener.facebook_url,
             "youtube_url": public_listener.youtube_url,
-            "x_url": public_listener.x_url
+            "x_url": public_listener.x_url,
+            "playlists": [
+                {
+                    "id": playlist.id,
+                    "name": playlist.name,
+                    "mix_count": sum(
+                        1 for item in playlist.items
+                        if item.mix is not None and item.mix.is_published
+                    )
+                }
+                for playlist in public_playlists
+            ]
         }
 
         return render_template(

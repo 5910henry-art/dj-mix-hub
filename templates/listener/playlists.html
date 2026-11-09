@@ -96,6 +96,9 @@ button:hover,.open:hover{background:var(--gold-light);transform:translateY(-1px)
 <span>{{ playlist.items|length }} mix{{ '' if playlist.items|length == 1 else 'es' }}</span>
 <span>{{ playlist.created_at.strftime('%d %b %Y') if playlist.created_at else '' }}</span>
 </div>
+<p style="font-size:12px;font-weight:700;color:{% if playlist.is_public %}#d9a441{% else %}#aaa{% endif %};margin:0 0 14px">
+    {% if playlist.is_public %}🌐 Public playlist{% else %}🔒 Private playlist{% endif %}
+</p>
 <a class="open" href="{{ url_for('listener_playlist_detail', playlist_id=playlist.id) }}">Open Playlist <span>→</span></a>
 </div>
 </article>

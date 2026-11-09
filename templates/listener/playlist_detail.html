@@ -107,6 +107,31 @@ button:hover,.action-link:hover{background:var(--gold-light);transform:translate
 <button type="submit" class="danger">Delete Playlist</button>
 </form>
 </div>
+
+<div style="margin-top:20px;padding-top:18px;border-top:1px solid #30303e">
+<h3 style="font-size:15px;margin:0 0 8px">Playlist visibility</h3>
+<p class="muted" style="margin:0 0 13px">
+    {% if playlist.is_public %}
+        Anyone with the link can view and play this playlist.
+    {% else %}
+        Only you can view this playlist. It is private by default.
+    {% endif %}
+</p>
+<form action="{{ url_for('update_listener_playlist_visibility', playlist_id=playlist.id) }}" method="POST" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<label style="display:flex;align-items:center;gap:9px;color:#fff">
+<input type="checkbox" name="is_public" {% if playlist.is_public %}checked{% endif %} style="width:18px;height:18px;min-width:18px;accent-color:#d9a441">
+Make this playlist public
+</label>
+<button type="submit">Save Visibility</button>
+</form>
+{% if playlist.is_public %}
+<div style="margin-top:15px">
+<p class="muted" style="margin:0 0 8px">Share this playlist:</p>
+<a class="action-link" href="{{ url_for('public_listener_playlist', playlist_id=playlist.id) }}" target="_blank" rel="noopener noreferrer">Open Public Playlist ↗</a>
+</div>
+{% endif %}
+</div>
 </section>
 
 {% if items %}

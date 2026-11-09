@@ -80,6 +80,19 @@
                     {% endif %}
                 </div>
             </div>
+
+            {% if profile.playlists %}
+            <section class="socials">
+                <h2>Public playlists</h2>
+                <div class="social-links">
+                    {% for playlist in profile.playlists %}
+                    <a href="{{ url_for('public_listener_playlist', playlist_id=playlist.id) }}">
+                        ♫ {{ playlist.name }} · {{ playlist.mix_count }} mix{{ '' if playlist.mix_count == 1 else 'es' }} ↗
+                    </a>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
         </div>
     </section>
 </main>
