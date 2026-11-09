@@ -996,3 +996,42 @@ footer small {
     line-height: 1.6;
     font-size: 14px;
 }
+
+
+/* Public legal and support pages */
+.footer-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px 22px;
+    margin-top: 16px;
+}
+
+.footer-links a {
+    color: var(--muted);
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.footer-links a:hover {
+    color: white;
+}
+
+.legal-page {
+    width: min(900px, 90%);
+    margin: 45px auto;
+    line-height: 1.75;
+}
+
+.legal-page h1 {
+    margin-bottom: 10px;
+}
+
+.legal-page h2 {
+    margin-top: 28px;
+}
+
+.legal-page a {
+    color: inherit;
+}

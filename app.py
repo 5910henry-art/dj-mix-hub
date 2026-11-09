@@ -1326,6 +1326,22 @@ def create_app():
         )
 
 
+    @app.route("/contact")
+    def contact_page():
+        return render_template("legal_page.html", page="contact")
+
+    @app.route("/privacy")
+    def privacy_page():
+        return render_template("legal_page.html", page="privacy")
+
+    @app.route("/terms")
+    def terms_page():
+        return render_template("legal_page.html", page="terms")
+
+    @app.route("/copyright")
+    def copyright_page():
+        return render_template("legal_page.html", page="copyright")
+
     @app.route("/")
     def home():
         from models import Mix, Genre, DJ, Advertisement, Listener

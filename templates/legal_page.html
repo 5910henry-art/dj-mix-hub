@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101018">
+    <title>
+        {% if page == "contact" %}Contact{% elif page == "privacy" %}Privacy Policy{% elif page == "terms" %}Terms of Service{% else %}Copyright & Takedown{% endif %}
+        | DJ MIX HUB
+    </title>
+    <meta name="description" content="DJ MIX HUB support, privacy, terms of service and copyright information.">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="navbar">
+    <a href="/" class="brand">🎧 DJ MIX <span>HUB</span></a>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/djs">Discover DJs</a>
+    </nav>
+</header>
+
+<main class="legal-page">
+    {% if page == "contact" %}
+        <h1>Contact DJ MIX HUB</h1>
+        <p>Need help with your account, a DJ profile, a mix, advertising, privacy, or copyright concerns? Contact our support team.</p>
+        <h2>Support and enquiries</h2>
+        <p>Email: <a href="mailto:djmixhub.support@gmail.com">djmixhub.support@gmail.com</a></p>
+        <p>Please include enough detail for us to understand and respond to your enquiry.</p>
+
+    {% elif page == "privacy" %}
+        <h1>Privacy Policy</h1>
+        <p><strong>Last updated: 9 November 2026</strong></p>
+        <p>This policy explains how DJ MIX HUB handles information when you use the website.</p>
+
+        <h2>Information we may collect</h2>
+        <p>Depending on how you use the website, information may include account details such as usernames and email addresses, profile information, uploaded mix details and files, booking or contact information you submit, and information about how you use the service.</p>
+        <p>Technical information such as browser details, device information, IP address and server logs may also be processed when you access the website.</p>
+
+        <h2>How information is used</h2>
+        <p>We use information to operate and maintain DJ MIX HUB, manage accounts and uploads, provide listening and discovery features, respond to enquiries, support bookings, prevent misuse, and improve the service.</p>
+
+        <h2>Cookies and advertising</h2>
+        <p>The website may use session cookies or similar technologies needed for features such as account login and website operation.</p>
+        <p>If third-party advertising services, including Google AdSense, are enabled, those services and their partners may use cookies or similar technologies to serve, personalise, or measure advertisements, subject to their own policies and applicable settings.</p>
+
+        <h2>Sharing and third-party services</h2>
+        <p>Information may be processed by service providers that help us host, secure, maintain, or operate the website. Public profile details and content you choose to publish may be visible to other visitors.</p>
+
+        <h2>Data security and retention</h2>
+        <p>We take reasonable steps to protect information, but no online service can guarantee absolute security. Information may be retained for as long as reasonably needed to operate the service, meet legitimate business needs, resolve disputes, or comply with applicable obligations.</p>
+
+        <h2>Your choices and enquiries</h2>
+        <p>You can contact us about access, correction, or deletion requests and other privacy concerns. Requests may require verification and may be subject to applicable legal or operational requirements.</p>
+        <p>Email: <a href="mailto:djmixhub.support@gmail.com">djmixhub.support@gmail.com</a></p>
+
+    {% elif page == "terms" %}
+        <h1>Terms of Service</h1>
+        <p><strong>Last updated: 9 November 2026</strong></p>
+        <p>By accessing or using DJ MIX HUB, you agree to these terms. If you do not agree, please do not use the service.</p>
+
+        <h2>Accounts</h2>
+        <p>You are responsible for providing accurate account information, keeping your login details secure, and activity carried out through your account. Do not impersonate another person or misuse another user's account.</p>
+
+        <h2>DJ uploads and content rights</h2>
+        <p>You must only upload content that you own or are authorised to use and share. A DJ's ownership of a mix recording does not automatically establish permission to use every song, sound recording, composition, sample, or other work included in it. You are responsible for obtaining the necessary rights and permissions.</p>
+
+        <h2>Permission to operate the service</h2>
+        <p>When you upload content, you give DJ MIX HUB permission to store, host, reproduce, display, stream, and make that content available through the website, and to promote it in connection with the service. This permission is for operating and presenting DJ MIX HUB; it does not transfer ownership of your content to us.</p>
+
+        <h2>Prohibited content and moderation</h2>
+        <p>You must not upload unlawful, infringing, deceptive, abusive, or otherwise prohibited content. We may review, restrict, remove, or disable content and may suspend accounts where reasonably necessary to protect users, rights holders, or the service.</p>
+
+        <h2>Availability and changes</h2>
+        <p>We may update, change, suspend, or discontinue parts of the website. We aim to keep the service available, but do not guarantee uninterrupted access or that every feature will always be available.</p>
+
+        <h2>Contact</h2>
+        <p>Questions about these terms can be sent to <a href="mailto:djmixhub.support@gmail.com">djmixhub.support@gmail.com</a>.</p>
+
+    {% elif page == "copyright" %}
+        <h1>Copyright and Takedown Policy</h1>
+        <p>DJ MIX HUB respects the rights of creators, performers, labels, publishers, DJs, and other rights holders. We expect users to upload only content they have the right or permission to share.</p>
+
+        <h2>DJ upload responsibility</h2>
+        <p>Owning or creating a DJ mix recording does not necessarily mean you have permission to distribute every commercial recording, composition, sample, or other copyrighted work included in that mix. Uploaders are responsible for obtaining all necessary permissions.</p>
+
+        <h2>Reporting potentially infringing content</h2>
+        <p>If you believe content on DJ MIX HUB infringes your copyright or other rights, email <a href="mailto:djmixhub.support@gmail.com">djmixhub.support@gmail.com</a> with the following information:</p>
+        <ul>
+            <li>Your name and contact details.</li>
+            <li>Identification of the copyrighted work or material you believe is being infringed.</li>
+            <li>The exact URL of the DJ MIX HUB content you want us to review.</li>
+            <li>An explanation of your ownership or authority to act for the rights holder.</li>
+            <li>A statement that you believe in good faith that the use is not authorised by the rights holder, its agent, or the law.</li>
+            <li>A statement that the information in your report is accurate.</li>
+        </ul>
+
+        <h2>Review and action</h2>
+        <p>We may request further information, review the report, and remove or disable access to content where appropriate. We may notify the uploader and take action against accounts involved in repeated infringement.</p>
+
+        <h2>Counter-notices and questions</h2>
+        <p>If your content has been restricted and you believe this was a mistake, contact us at the same email address with the relevant URL and an explanation. We will review the information provided.</p>
+        <p>This policy does not promise a particular legal outcome or replace advice from a qualified legal professional.</p>
+    {% endif %}
+</main>
+
+<footer>
+    <a href="/" class="brand">🎧 DJ MIX <span>HUB</span></a>
+    <p>Listen. Discover. Download.</p>
+    <nav class="footer-links" aria-label="Legal and support links">
+        <a href="{{ url_for('contact_page') }}">Contact</a>
+        <a href="{{ url_for('privacy_page') }}">Privacy Policy</a>
+        <a href="{{ url_for('terms_page') }}">Terms of Service</a>
+        <a href="{{ url_for('copyright_page') }}">Copyright &amp; Takedown</a>
+    </nav>
+    <small>© 2026 DJ MIX HUB. All rights reserved.</small>
+</footer>
+</body>
+</html>
