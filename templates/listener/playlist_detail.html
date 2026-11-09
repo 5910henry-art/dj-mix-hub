@@ -12,6 +12,10 @@ body{margin:0;background:var(--bg);color:#fff;font-family:Arial,sans-serif}
 .page{width:min(1120px,100%);margin:auto;padding:35px 22px 65px}
 .back{display:inline-flex;color:var(--gold-light);text-decoration:none;margin-bottom:25px;font-weight:600}
 .back:hover{color:white}
+.top-links{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:25px}
+.top-links .back{margin:0}
+.new-playlist{background:var(--gold);color:#17120a}
+@media(max-width:420px){.top-links{align-items:stretch}.top-links .action-link{width:100%}}
 .hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:24px;padding:30px;border:1px solid #5c482b;border-radius:22px;background:radial-gradient(circle at 85% 15%,#5c431e88,transparent 35%),linear-gradient(120deg,#28202a,#15151e 70%);margin-bottom:25px}
 .hero-art{width:125px;height:125px;flex-shrink:0;border-radius:20px;display:grid;place-items:center;font-size:55px;background:linear-gradient(145deg,#76551f,#171720);border:1px solid #d9a44188;box-shadow:0 12px 35px #0007}
 .eyebrow{font-size:11px;letter-spacing:2px;color:var(--gold-light);font-weight:800;text-transform:uppercase}
@@ -76,7 +80,10 @@ button:hover,.action-link:hover{background:var(--gold-light);transform:translate
 </head>
 <body>
 <main class="page">
+<div class="top-links">
 <a class="back" href="{{ url_for('listener_playlists') }}">← All Playlists</a>
+<a class="action-link new-playlist" href="{{ url_for('listener_playlists') }}#new-playlist">＋ Create Another Playlist</a>
+</div>
 
 <header class="hero">
 <div class="hero-art">♫</div>
