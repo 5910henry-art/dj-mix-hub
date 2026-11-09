@@ -779,13 +779,13 @@ footer small {
     justify-content: space-between;
     gap: 25px;
     padding: 35px;
-    border: 1px solid #6342a0;
     border-radius: 20px;
-    background: linear-gradient(120deg, #2b194c, #171526);
+    background: linear-gradient(120deg, #21152e, #39152b);
+    border: 1px solid #59304f;
     overflow: hidden;
 }
 
-.booking-promo > div:first-child {
+.booking-promo-content {
     max-width: 650px;
 }
 
@@ -794,8 +794,8 @@ footer small {
     margin: 10px 0;
 }
 
-.booking-promo p {
-    color: #d0c9dc;
+.booking-promo p:not(.eyebrow) {
+    color: #c5bdce;
     line-height: 1.7;
 }
 
@@ -817,12 +817,18 @@ footer small {
 }
 
 .booking-promo-icon {
+    width: 120px;
+    height: 85px;
     flex-shrink: 0;
-    font-size: 90px;
-    color: #bda0ff;
+    display: grid;
+    place-items: center;
+    background: #793cff;
+    color: white;
+    font-size: 45px;
+    border-radius: 22px;
 }
 
-@media (max-width: 600px) {
+@media(max-width: 600px) {
     .booking-promo {
         padding: 23px;
     }

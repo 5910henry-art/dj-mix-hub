@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='pwa/icon-192.png') }}">
     <title>DJ MIX HUB | Discover Your Sound</title>
     <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/style.css', v='book-dj-youtube-match-20261109') }}">
+          href="{{ url_for('static', filename='css/style.css', v='book-dj-exact-youtube-size-20261109') }}">
 
     <style>
         .public-listener-grid {
@@ -234,21 +234,23 @@
     </section>
     {% endif %}
 
-    <section class="section booking-promo" id="book-dj">
-        <div>
-            <p class="eyebrow">MAKE YOUR EVENT UNFORGETTABLE</p>
-            <h2>Need a DJ for Your Event?</h2>
-            <p>
-                Bring the energy with DJ Jitiasque Unique.
-                Book professional entertainment for your celebration,
-                party, wedding or special occasion.
-            </p>
-            <a class="booking-promo-button"
-               href="{{ url_for('public_booking') }}">
-                🎧 Book DJ Jitiasque Unique
-            </a>
+    <section class="section" id="book-dj">
+        <div class="booking-promo">
+            <div class="booking-promo-content">
+                <p class="eyebrow">MAKE YOUR EVENT UNFORGETTABLE</p>
+                <h2>Need a DJ for Your Event?</h2>
+                <p>
+                    Bring the energy with DJ Jitiasque Unique.
+                    Book professional entertainment for your celebration,
+                    party, wedding or special occasion.
+                </p>
+                <a class="booking-promo-button"
+                   href="{{ url_for('public_booking') }}">
+                    🎧 Book a DJ
+                </a>
+            </div>
+            <div class="booking-promo-icon">♫</div>
         </div>
-        <div class="booking-promo-icon">♫</div>
     </section>
 
 
