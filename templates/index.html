@@ -407,7 +407,9 @@ if ("serviceWorker" in navigator) {
 <script>
 (function () {
     const genreList = document.querySelector(".genre-list");
-    if (!genreList) return;
+    const searchForm = document.querySelector(".search-form");
+
+    if (!genreList && !searchForm) return;
 
     function initializeMixCarousel(section) {
         const track = section.querySelector("#mixes-track");
@@ -468,12 +470,25 @@ if ("serviceWorker" in navigator) {
 
         latest.replaceWith(newSection);
 
-        genreList.querySelectorAll("a").forEach(function (link) {
-            link.classList.toggle(
-                "active",
-                link.href === url.href
-            );
-        });
+        if (genreList) {
+            const selectedGenre = url.searchParams.get("genre");
+
+            genreList.querySelectorAll("a").forEach(function (link) {
+                const linkUrl = new URL(link.href, window.location.origin);
+
+                link.classList.toggle(
+                    "active",
+                    linkUrl.searchParams.get("genre") === selectedGenre
+                );
+            });
+        }
+
+        if (searchForm) {
+            const searchInput = searchForm.querySelector('[name="q"]');
+            if (searchInput) {
+                searchInput.value = url.searchParams.get("q") || "";
+            }
+        }
 
         initializeMixCarousel(newSection);
 
@@ -482,7 +497,8 @@ if ("serviceWorker" in navigator) {
         }
     }
 
-    genreList.addEventListener("click", function (event) {
+    if (genreList) {
+        genreList.addEventListener("click", function (event) {
         const link = event.target.closest("a");
         if (!link) return;
 
@@ -498,13 +514,43 @@ if ("serviceWorker" in navigator) {
 
         event.preventDefault();
 
-        const url = new URL(link.href, window.location.origin);
+        const url = new URL(window.location.href);
+        const linkUrl = new URL(link.href, window.location.origin);
+        const genre = linkUrl.searchParams.get("genre");
+
+        if (genre) {
+            url.searchParams.set("genre", genre);
+        } else {
+            url.searchParams.delete("genre");
+        }
 
         loadLatest(url, true).catch(function (error) {
             console.error("Genre filter failed:", error);
-            window.location.href = link.href;
+            window.location.href = url.href;
         });
-    });
+        });
+    }
+
+    if (searchForm) {
+        searchForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const url = new URL(window.location.href);
+            const searchInput = searchForm.querySelector('[name="q"]');
+            const searchTerm = searchInput ? searchInput.value.trim() : "";
+
+            if (searchTerm) {
+                url.searchParams.set("q", searchTerm);
+            } else {
+                url.searchParams.delete("q");
+            }
+
+            loadLatest(url, true).catch(function (error) {
+                console.error("AJAX search failed:", error);
+                window.location.href = url.pathname + url.search;
+            });
+        });
+    }
 
     window.addEventListener("popstate", function () {
         loadLatest(new URL(window.location.href), false)
