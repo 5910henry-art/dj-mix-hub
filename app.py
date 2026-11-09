@@ -3,6 +3,7 @@ from datetime import date
 from decimal import Decimal, InvalidOperation
 from uuid import uuid4
 from functools import wraps
+from urllib.parse import urlparse
 
 from flask import (
     Flask, render_template, jsonify, request,
@@ -463,6 +464,46 @@ def create_app():
             username = request.form.get("username", "").strip()
             email = request.form.get("email", "").strip().lower()
             bio = request.form.get("bio", "").strip()
+            is_public = request.form.get("is_public") == "on"
+
+            social_domains = {
+                "instagram_url": {"instagram.com"},
+                "tiktok_url": {"tiktok.com"},
+                "facebook_url": {"facebook.com"},
+                "youtube_url": {"youtube.com", "youtu.be"},
+                "x_url": {"x.com", "twitter.com"}
+            }
+
+            social_values = {
+                field: request.form.get(field, "").strip()
+                for field in social_domains
+            }
+
+            invalid_social = []
+            for field, value in social_values.items():
+                if not value:
+                    continue
+
+                try:
+                    parsed = urlparse(value)
+                    host = (parsed.hostname or "").lower()
+                    allowed = social_domains[field]
+
+                    valid_host = any(
+                        host == domain or host.endswith("." + domain)
+                        for domain in allowed
+                    )
+
+                    if (
+                        parsed.scheme != "https"
+                        or not valid_host
+                        or not parsed.path
+                        or parsed.username
+                        or parsed.password
+                    ):
+                        invalid_social.append(field)
+                except ValueError:
+                    invalid_social.append(field)
 
             if not username or not email:
                 flash("Username and email are required.")
@@ -484,6 +525,13 @@ def create_app():
                 flash("Display name must not exceed 120 characters.")
             elif len(bio) > 1000:
                 flash("Your biography must not exceed 1,000 characters.")
+            elif any(len(value) > 500 for value in social_values.values()):
+                flash("Each social media URL must not exceed 500 characters.")
+            elif invalid_social:
+                flash(
+                    "Please enter valid HTTPS social profile URLs: "
+                    + ", ".join(invalid_social)
+                )
             elif Listener.query.filter(
                 Listener.id != listener.id,
                 Listener.username.ilike(username)
@@ -578,6 +626,10 @@ def create_app():
                     listener.email = email
                     listener.display_name = display_name or username
                     listener.bio = bio or None
+                    listener.is_public = is_public
+
+                    for field, value in social_values.items():
+                        setattr(listener, field, value or None)
 
                     if new_photo:
                         listener.profile_image = new_photo
@@ -1143,6 +1195,36 @@ def create_app():
         return response
 
 
+    @app.route("/listeners/<string:username>")
+    def public_listener_profile(username):
+        from models import Listener
+
+        public_listener = Listener.query.filter(
+            Listener.username.ilike(username),
+            Listener.is_public.is_(True)
+        ).first()
+
+        if public_listener is None:
+            abort(404)
+
+        profile = {
+            "username": public_listener.username,
+            "display_name": public_listener.display_name,
+            "bio": public_listener.bio,
+            "profile_image": public_listener.profile_image,
+            "instagram_url": public_listener.instagram_url,
+            "tiktok_url": public_listener.tiktok_url,
+            "facebook_url": public_listener.facebook_url,
+            "youtube_url": public_listener.youtube_url,
+            "x_url": public_listener.x_url
+        }
+
+        return render_template(
+            "listener/public_profile.html",
+            profile=profile
+        )
+
+
     @app.route("/")
     def home():
         from models import Mix, Genre, DJ, Advertisement, Listener
@@ -1178,6 +1260,18 @@ def create_app():
 
         genres = Genre.query.order_by(Genre.name).all()
 
+        public_listeners = [
+            {
+                "username": item.username,
+                "display_name": item.display_name,
+                "bio": item.bio,
+                "profile_image": item.profile_image
+            }
+            for item in Listener.query.filter(
+                Listener.is_public.is_(True)
+            ).order_by(Listener.created_at.desc()).limit(12).all()
+        ]
+
         today = date.today()
         ads = Advertisement.query.filter(
             Advertisement.is_active.is_(True),
@@ -1208,7 +1302,8 @@ def create_app():
             search=search,
             selected_genre=genre_id,
             ads=ads,
-            listener=listener
+            listener=listener,
+            public_listeners=public_listeners
         )
 
     @app.route("/uploads/<path:filename>")
@@ -1219,6 +1314,49 @@ def create_app():
         )
 
         local_path = safe_join(app.config["UPLOAD_FOLDER"], filename)
+
+        # Listener photos must belong to a database-linked profile.
+        # Private photos are visible only to their owner.
+        if filename.startswith("listeners/"):
+            listener_image = Listener.query.filter_by(
+                profile_image=filename
+            ).first()
+
+            if listener_image is None:
+                abort(404)
+
+            is_owner = (
+                str(session.get("listener_id") or "")
+                == str(listener_image.id)
+            )
+
+            if not listener_image.is_public and not is_owner:
+                abort(404)
+
+            if local_path and os.path.isfile(local_path):
+                return send_from_directory(
+                    app.config["UPLOAD_FOLDER"], filename
+                )
+
+            if filebase_enabled():
+                return stream_image(filename)
+
+            abort(404)
+
+        # Protect legacy listener photo paths too.
+        listener_image = Listener.query.filter_by(
+            profile_image=filename
+        ).first()
+
+        if listener_image is not None:
+            is_owner = (
+                str(session.get("listener_id") or "")
+                == str(listener_image.id)
+            )
+
+            if not listener_image.is_public and not is_owner:
+                abort(404)
+
         if local_path and os.path.isfile(local_path):
             return send_from_directory(
                 app.config["UPLOAD_FOLDER"], filename
@@ -1229,28 +1367,18 @@ def create_app():
                 app.config["UPLOAD_FOLDER"], filename
             )
 
-        # Only database-linked mix covers may be read from Filebase.
         if Mix.query.filter_by(cover_image=filename).first():
             return stream_cover(filename)
 
-        # Only database-linked DJ profile photos may be read remotely.
         if (
             filename.startswith("djs/")
             and DJ.query.filter_by(profile_image=filename).first()
         ):
             return stream_image(filename)
 
-        # Only database-linked advertisement images may be read remotely.
         if (
             filename.startswith("ads/")
             and Advertisement.query.filter_by(image_file=filename).first()
-        ):
-            return stream_image(filename)
-
-        # Only database-linked listener profile photos may be read remotely.
-        if (
-            filename.startswith("listeners/")
-            and Listener.query.filter_by(profile_image=filename).first()
         ):
             return stream_image(filename)
 

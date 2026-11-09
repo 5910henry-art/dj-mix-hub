@@ -13,6 +13,44 @@
     <title>DJ MIX HUB | Discover Your Sound</title>
     <link rel="stylesheet"
           href="{{ url_for('static', filename='css/style.css', v='662fc2f') }}">
+
+    <style>
+        .public-listener-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+            gap:16px;
+        }
+        .public-listener-card {
+            display:block;
+            padding:18px;
+            border:1px solid #343444;
+            border-radius:16px;
+            background:#1b1b26;
+            color:#f5f5f7;
+            text-decoration:none;
+            transition:border-color .2s,transform .2s;
+        }
+        .public-listener-card:hover {
+            border-color:#d9a441;
+            transform:translateY(-3px);
+        }
+        .public-listener-avatar {
+            width:76px;
+            height:76px;
+            border-radius:50%;
+            object-fit:cover;
+            background:#d9a441;
+            color:#151515;
+            display:grid;
+            place-items:center;
+            font-size:30px;
+            font-weight:800;
+            margin-bottom:12px;
+        }
+        .public-listener-card h3 { margin:0 0 5px; }
+        .public-listener-card p { color:#aaa; margin:6px 0 0; }
+    </style>
+
 </head>
 <body>
 
@@ -20,6 +58,7 @@
     <a href="/" class="brand">🎧 DJ MIX <span>HUB</span></a>
     <nav>
         <a href="/">Home</a>
+        <a href="#listeners">Listeners</a>
         <a href="#genres">Genres</a>
         <a href="#latest">Latest Mixes</a>
         <a href="#youtube">YouTube</a>
@@ -211,6 +250,44 @@
         </div>
         <div class="booking-promo-icon">♫</div>
     </section>
+
+
+    {% if public_listeners %}
+    <section class="section" id="listeners">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">MEET THE COMMUNITY</p>
+                <h2>Public Listeners</h2>
+                <p>Discover music lovers in the DJ MIX HUB community.</p>
+            </div>
+        </div>
+
+        <div class="public-listener-grid">
+            {% for public_listener in public_listeners %}
+            <a class="public-listener-card"
+               href="{{ url_for('public_listener_profile', username=public_listener.username) }}">
+                {% if public_listener.profile_image %}
+                    <img class="public-listener-avatar"
+                         src="{{ url_for('uploaded_file', filename=public_listener.profile_image) }}"
+                         alt="{{ public_listener.display_name or public_listener.username }}">
+                {% else %}
+                    <div class="public-listener-avatar">
+                        {{ (public_listener.display_name or public_listener.username)[0]|upper }}
+                    </div>
+                {% endif %}
+                <h3>{{ public_listener.display_name or public_listener.username }}</h3>
+                <p>@{{ public_listener.username }}</p>
+                {% if public_listener.bio %}
+                    <p>{{ public_listener.bio|truncate(100) }}</p>
+                {% else %}
+                    <p>DJ MIX HUB listener</p>
+                {% endif %}
+                <p style="color:#d9a441;font-weight:700;">View profile →</p>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 
     <section class="section" id="genres">
         <div class="section-heading">

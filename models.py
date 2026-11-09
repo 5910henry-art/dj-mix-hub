@@ -150,6 +150,14 @@ class Listener(db.Model):
     display_name = db.Column(db.String(120))
     bio = db.Column(db.Text)
     profile_image = db.Column(db.String(255))
+    is_public = db.Column(
+        db.Boolean, nullable=False, default=False, server_default=db.false()
+    )
+    instagram_url = db.Column(db.String(500))
+    tiktok_url = db.Column(db.String(500))
+    facebook_url = db.Column(db.String(500))
+    youtube_url = db.Column(db.String(500))
+    x_url = db.Column(db.String(500))
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,

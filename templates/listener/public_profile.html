@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Public listener profile on DJ MIX HUB.">
+    <title>{{ profile.display_name or profile.username }} | DJ MIX HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body { background:#101018; color:#f5f5f7; }
+        .public-wrap { max-width:760px; margin:40px auto; padding:0 18px 50px; }
+        .back-link { display:inline-block; color:#d9a441; text-decoration:none; margin-bottom:20px; }
+        .public-card { background:linear-gradient(145deg,#20202c,#171720); border:1px solid #343444; border-radius:22px; overflow:hidden; }
+        .cover { height:155px; background:linear-gradient(120deg,#d9a441,#76521a,#242432); }
+        .content { padding:0 28px 30px; }
+        .identity { display:flex; align-items:end; gap:18px; flex-wrap:wrap; margin-top:-55px; }
+        .avatar { width:112px; height:112px; border-radius:50%; border:5px solid #20202c; object-fit:cover; background:#d9a441; color:#151515; display:grid; place-items:center; font-size:42px; font-weight:800; }
+        .heading { padding-bottom:9px; }
+        .heading h1 { margin:0 0 5px; font-size:27px; }
+        .heading p { margin:0; color:#aaa; }
+        .bio { margin-top:25px; padding:18px; background:#11111a; border:1px solid #343444; border-radius:13px; color:#ddd; line-height:1.7; white-space:pre-wrap; overflow-wrap:anywhere; }
+        .socials { margin-top:25px; }
+        .socials h2 { font-size:18px; }
+        .social-links { display:flex; flex-wrap:wrap; gap:10px; }
+        .social-links a { display:inline-block; padding:11px 16px; background:#11111a; border:1px solid #414152; border-radius:10px; color:#d9a441; text-decoration:none; font-weight:700; overflow-wrap:anywhere; }
+        .social-links a:hover { border-color:#d9a441; }
+        .empty-social { color:#aaa; }
+        @media(max-width:600px) {
+            .content { padding:0 17px 24px; }
+            .identity { align-items:center; }
+            .heading h1 { font-size:22px; }
+        }
+    </style>
+</head>
+<body>
+<main class="public-wrap">
+    <a class="back-link" href="/">← DJ MIX HUB Home</a>
+
+    <section class="public-card">
+        <div class="cover"></div>
+        <div class="content">
+            <div class="identity">
+                {% if profile.profile_image %}
+                    <img class="avatar"
+                         src="{{ url_for('uploaded_file', filename=profile.profile_image) }}"
+                         alt="{{ profile.display_name or profile.username }}">
+                {% else %}
+                    <div class="avatar">{{ (profile.display_name or profile.username)[0]|upper }}</div>
+                {% endif %}
+                <div class="heading">
+                    <h1>{{ profile.display_name or profile.username }}</h1>
+                    <p>@{{ profile.username }}</p>
+                </div>
+            </div>
+
+            {% if profile.bio %}
+                <div class="bio">{{ profile.bio }}</div>
+            {% endif %}
+
+            <div class="socials">
+                <h2>Connect with me</h2>
+                <div class="social-links">
+                    {% if profile.instagram_url %}
+                        <a href="{{ profile.instagram_url }}" target="_blank" rel="noopener noreferrer">Instagram ↗</a>
+                    {% endif %}
+                    {% if profile.tiktok_url %}
+                        <a href="{{ profile.tiktok_url }}" target="_blank" rel="noopener noreferrer">TikTok ↗</a>
+                    {% endif %}
+                    {% if profile.facebook_url %}
+                        <a href="{{ profile.facebook_url }}" target="_blank" rel="noopener noreferrer">Facebook ↗</a>
+                    {% endif %}
+                    {% if profile.youtube_url %}
+                        <a href="{{ profile.youtube_url }}" target="_blank" rel="noopener noreferrer">YouTube ↗</a>
+                    {% endif %}
+                    {% if profile.x_url %}
+                        <a href="{{ profile.x_url }}" target="_blank" rel="noopener noreferrer">X (Twitter) ↗</a>
+                    {% endif %}
+                    {% if not (profile.instagram_url or profile.tiktok_url or profile.facebook_url or profile.youtube_url or profile.x_url) %}
+                        <p class="empty-social">This listener hasn't added any social links yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+</body>
+</html>

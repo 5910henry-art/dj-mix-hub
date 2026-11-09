@@ -71,6 +71,24 @@
                 </div>
             </div>
 
+
+            <div class="section">
+                <h2>Public profile visibility</h2>
+                <div class="info">
+                    {% if listener.is_public %}
+                        <p>🌍 Your profile is public and can appear on the homepage.</p>
+                        <p style="margin-top:12px;">
+                            <a class="btn" href="{{ url_for('public_listener_profile', username=listener.username) }}" target="_blank" rel="noopener noreferrer">View my public profile</a>
+                        </p>
+                    {% else %}
+                        <p>🔒 Your profile is private and does not appear in the public listener directory.</p>
+                    {% endif %}
+                    <p style="margin-top:12px;color:#aaa;">
+                        Change this setting anytime using Edit Profile.
+                    </p>
+                </div>
+            </div>
+
             <div class="section">
                 <h2>Account information</h2>
                 <div class="info-grid">

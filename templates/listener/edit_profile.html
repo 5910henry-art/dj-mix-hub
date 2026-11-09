@@ -16,6 +16,8 @@
         .field label { display:block; margin-bottom:8px; font-weight:700; }
         .field input,.field textarea { width:100%; box-sizing:border-box; padding:13px; border-radius:9px; border:1px solid #414152; background:#11111a; color:white; font:inherit; }
         .field textarea { min-height:120px; resize:vertical; }
+        .visibility-option { display:flex !important; align-items:center; gap:10px; background:#11111a; border:1px solid #414152; border-radius:10px; padding:14px; }
+        .visibility-option input { width:20px; height:20px; accent-color:#d9a441; }
         .field small { display:block; color:#aaa; margin-top:6px; }
         .photo-row { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
         .photo-preview { width:90px; height:90px; object-fit:cover; border-radius:50%; background:#d9a441; border:3px solid #414152; }
@@ -77,6 +79,71 @@
                 <label for="bio">About me</label>
                 <textarea id="bio" name="bio" maxlength="1000" placeholder="Tell other music lovers about yourself...">{{ profile_values.get('bio', listener.bio or '') }}</textarea>
                 <small>Maximum 1,000 characters.</small>
+            </div>
+
+
+            {% set visibility_checked = (profile_values.get('is_public') == 'on') if form_data is not none else listener.is_public %}
+            <div class="field privacy-field">
+                <label for="is_public">Profile visibility</label>
+                <label class="visibility-option">
+                    <input id="is_public" type="checkbox" name="is_public"
+                           {% if visibility_checked %}checked{% endif %}>
+                    Make my profile public
+                </label>
+                <small>
+                    When enabled, your profile can appear on the DJ MIX HUB
+                    homepage. Visitors can see your display name, photo, bio
+                    and the social links you provide. Your email and playlists
+                    remain private.
+                </small>
+            </div>
+
+            <div class="field">
+                <h2>Social media links</h2>
+                <p class="muted">
+                    Add only the accounts you want visitors to see.
+                    Leave any field blank to hide that platform.
+                </p>
+            </div>
+
+            <div class="field">
+                <label for="instagram_url">Instagram profile URL</label>
+                <input id="instagram_url" type="url" name="instagram_url"
+                       maxlength="500"
+                       value="{{ profile_values.get('instagram_url', listener.instagram_url or '') }}"
+                       placeholder="https://www.instagram.com/yourusername">
+            </div>
+
+            <div class="field">
+                <label for="tiktok_url">TikTok profile URL</label>
+                <input id="tiktok_url" type="url" name="tiktok_url"
+                       maxlength="500"
+                       value="{{ profile_values.get('tiktok_url', listener.tiktok_url or '') }}"
+                       placeholder="https://www.tiktok.com/@yourusername">
+            </div>
+
+            <div class="field">
+                <label for="facebook_url">Facebook profile URL</label>
+                <input id="facebook_url" type="url" name="facebook_url"
+                       maxlength="500"
+                       value="{{ profile_values.get('facebook_url', listener.facebook_url or '') }}"
+                       placeholder="https://www.facebook.com/yourusername">
+            </div>
+
+            <div class="field">
+                <label for="youtube_url">YouTube channel URL</label>
+                <input id="youtube_url" type="url" name="youtube_url"
+                       maxlength="500"
+                       value="{{ profile_values.get('youtube_url', listener.youtube_url or '') }}"
+                       placeholder="https://www.youtube.com/@yourchannel">
+            </div>
+
+            <div class="field">
+                <label for="x_url">X (Twitter) profile URL</label>
+                <input id="x_url" type="url" name="x_url"
+                       maxlength="500"
+                       value="{{ profile_values.get('x_url', listener.x_url or '') }}"
+                       placeholder="https://x.com/yourusername">
             </div>
 
             <button class="save-btn" type="submit">Save Changes</button>
