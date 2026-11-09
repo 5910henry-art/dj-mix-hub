@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ playlist.name }} | DJ MIX HUB</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<style>
+.page{max-width:1100px;margin:40px auto;padding:20px;color:#fff}
+.panel,.track,.empty{background:#191923;border:1px solid #343444;border-radius:16px;padding:20px}
+.panel{margin:20px 0}
+.actions,.track-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.actions form,.track-actions form{display:flex;gap:8px;flex-wrap:wrap;margin:0}
+input{padding:10px;border-radius:8px;border:1px solid #555;background:#101018;color:white}
+button,.action-link{border:0;border-radius:8px;padding:10px 14px;background:#d9a441;color:#111;font-weight:bold;cursor:pointer;text-decoration:none}
+.danger{background:#762b35;color:white}
+.muted{color:#aaa}.back{display:inline-block;margin-bottom:18px;color:#d9a441}
+.player{background:#101018;border:1px solid #343444;border-radius:14px;padding:18px;margin:20px 0}
+.player audio{width:100%;margin-top:12px}
+.track-list{display:grid;gap:13px;margin-top:20px}
+.track{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+.track h3{margin:0 0 5px}
+.empty{text-align:center;padding:40px 20px}
+</style>
+</head>
+<body>
+<main class="page">
+<a class="back" href="{{ url_for('listener_playlists') }}">← My Playlists</a>
+<h1>🎵 {{ playlist.name }}</h1>
+<p class="muted">{{ items|length }} mix{{ '' if items|length == 1 else 'es' }}</p>
+
+<section class="panel">
+<div class="actions">
+<form action="{{ url_for('rename_listener_playlist', playlist_id=playlist.id) }}" method="POST">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<input type="text" name="name" value="{{ playlist.name }}" maxlength="100" required aria-label="Playlist name">
+<button type="submit">Rename</button>
+</form>
+<form action="{{ url_for('delete_listener_playlist', playlist_id=playlist.id) }}" method="POST" onsubmit="return confirm('Delete this playlist?')">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<button type="submit" class="danger">Delete Playlist</button>
+</form>
+</div>
+</section>
+
+{% if items %}
+<section class="player">
+<h2>▶ Playlist Player</h2>
+<p id="nowPlaying" class="muted">Ready to play {{ tracks|length }} mixes</p>
+<div class="track-actions">
+<button type="button" id="playAll">▶ Play All</button>
+<button type="button" id="nextTrack">Next Mix →</button>
+</div>
+<audio id="playlistAudio" controls preload="none"></audio>
+</section>
+
+<section class="track-list">
+{% for item, mix in items %}
+<article class="track">
+<div>
+<h3>{{ loop.index }}. {{ mix.title }}</h3>
+<p class="muted">DJ: {{ mix.dj.display_name or mix.dj.username }}</p>
+</div>
+<div class="track-actions">
+<a class="action-link" href="{{ url_for('mix_detail', mix_id=mix.id) }}">Open Mix</a>
+<form action="{{ url_for('remove_mix_from_listener_playlist', playlist_id=playlist.id, mix_id=mix.id) }}" method="POST" onsubmit="return confirm('Remove this mix?')">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<button type="submit" class="danger">Remove</button>
+</form>
+</div>
+</article>
+{% endfor %}
+</section>
+{% else %}
+<div class="empty">
+<h2>This playlist is empty</h2>
+<p>Open a published mix and use Add to Playlist.</p>
+<a class="action-link" href="{{ url_for('home') }}">Explore Mixes</a>
+</div>
+{% endif %}
+</main>
+
+{% if tracks %}
+<script>
+(function () {
+    const tracks = {{ tracks|tojson }};
+    const audio = document.getElementById('playlistAudio');
+    const label = document.getElementById('nowPlaying');
+    let current = -1;
+
+    function loadTrack(index, autoplay) {
+        if (!tracks.length) return;
+        current = index;
+        audio.src = tracks[current].url;
+        label.textContent = 'Now playing: ' + tracks[current].title +
+            ' — ' + tracks[current].dj + ' (' + (current + 1) + ' of ' + tracks.length + ')';
+        if (autoplay) {
+            audio.play().catch(function () {
+                label.textContent += ' — press Play to start';
+            });
+        }
+    }
+
+    document.getElementById('playAll').addEventListener('click', function () {
+        loadTrack(current < 0 ? 0 : current, true);
+    });
+
+    document.getElementById('nextTrack').addEventListener('click', function () {
+        loadTrack((current + 1) % tracks.length, true);
+    });
+
+    audio.addEventListener('ended', function () {
+        if (current + 1 < tracks.length) loadTrack(current + 1, true);
+        else label.textContent = 'Playlist finished.';
+    });
+
+    loadTrack(0, false);
+})();
+</script>
+{% endif %}
+</body>
+</html>

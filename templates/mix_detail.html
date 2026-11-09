@@ -113,6 +113,38 @@
                     </a>
                 {% endif %}
 
+                {% if listener %}
+                    {% if listener_playlists %}
+                        <form id="playlistAddForm" method="POST"
+                              class="playlist-add-form"
+                              data-base="{{ url_for('listener_playlists') }}/">
+                            <input type="hidden" name="csrf_token"
+                                   value="{{ csrf_token() }}">
+                            <label for="playlistChoice">🎵 Add this mix to a playlist</label>
+                            <select id="playlistChoice" required>
+                                <option value="">Choose a playlist</option>
+                                {% for playlist in listener_playlists %}
+                                    <option value="{{ playlist.id }}">{{ playlist.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit">Add to Playlist</button>
+                        </form>
+                        <script>
+                        document.getElementById('playlistAddForm').addEventListener('submit', function(event) {
+                            const selected = document.getElementById('playlistChoice').value;
+                            if (!selected) {
+                                event.preventDefault();
+                                alert('Please choose a playlist first.');
+                                return;
+                            }
+                            this.action = this.dataset.base + selected + '/add/{{ mix.id }}';
+                        });
+                        </script>
+                    {% else %}
+                        <p>You have no playlists yet. <a href="{{ url_for('listener_playlists') }}">Create your first playlist</a>.</p>
+                    {% endif %}
+                {% endif %}
+
                 <div class="mix-sharing">
                     <h3>📲 Share this Mix</h3>
 

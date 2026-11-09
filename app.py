@@ -469,6 +469,296 @@ def create_app():
         )
 
 
+    def get_playlist_listener():
+        from models import Listener
+
+        listener_id = session.get("listener_id")
+
+        if not listener_id:
+            flash("Please log in to manage your playlists.", "warning")
+            return None
+
+        listener = db.session.get(Listener, listener_id)
+
+        if listener is None:
+            session.pop("listener_id", None)
+            flash("Please log in again.", "warning")
+            return None
+
+        return listener
+
+
+    @app.route("/listener/playlists")
+    def listener_playlists():
+        from models import ListenerPlaylist
+
+        listener = get_playlist_listener()
+        if listener is None:
+            return redirect(url_for("listener_login"))
+
+        playlists = ListenerPlaylist.query.filter_by(
+            listener_id=listener.id
+        ).order_by(
+            ListenerPlaylist.updated_at.desc()
+        ).all()
+
+        return render_template(
+            "listener/playlists.html",
+            listener=listener,
+            playlists=playlists
+        )
+
+
+    @app.route("/listener/playlists/new", methods=["POST"])
+    def create_listener_playlist():
+        from models import ListenerPlaylist
+
+        listener = get_playlist_listener()
+        if listener is None:
+            return redirect(url_for("listener_login"))
+
+        name = request.form.get("name", "").strip()
+
+        if not name or len(name) > 100:
+            flash("Enter a playlist name between 1 and 100 characters.", "warning")
+            return redirect(url_for("listener_playlists"))
+
+        existing = ListenerPlaylist.query.filter(
+            ListenerPlaylist.listener_id == listener.id,
+            db.func.lower(ListenerPlaylist.name) == name.lower()
+        ).first()
+
+        if existing:
+            flash("You already have a playlist with that name.", "warning")
+            return redirect(url_for("listener_playlists"))
+
+        try:
+            playlist = ListenerPlaylist(
+                listener_id=listener.id,
+                name=name
+            )
+            db.session.add(playlist)
+            db.session.commit()
+            flash("Playlist created successfully.", "success")
+            return redirect(
+                url_for("listener_playlist_detail", playlist_id=playlist.id)
+            )
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Playlist creation failed")
+            flash("Could not create your playlist. Please try again.", "danger")
+            return redirect(url_for("listener_playlists"))
+
+
+    @app.route("/listener/playlists/<int:playlist_id>")
+    def listener_playlist_detail(playlist_id):
+        from models import ListenerPlaylist, ListenerPlaylistItem, Mix
+
+        listener = get_playlist_listener()
+        if listener is None:
+            return redirect(url_for("listener_login"))
+
+        playlist = ListenerPlaylist.query.filter_by(
+            id=playlist_id,
+            listener_id=listener.id
+        ).first_or_404()
+
+        items = db.session.query(
+            ListenerPlaylistItem,
+            Mix
+        ).join(
+            Mix,
+            ListenerPlaylistItem.mix_id == Mix.id
+        ).filter(
+            ListenerPlaylistItem.playlist_id == playlist.id,
+            Mix.is_published.is_(True)
+        ).order_by(
+            ListenerPlaylistItem.position.asc(),
+            ListenerPlaylistItem.added_at.asc()
+        ).all()
+
+        return render_template(
+            "listener/playlist_detail.html",
+            listener=listener,
+            playlist=playlist,
+            items=items,
+            tracks=[
+                {
+                    "title": mix.title,
+                    "dj": mix.dj.display_name or mix.dj.username,
+                    "url": url_for("stream_mix", mix_id=mix.id)
+                }
+                for item, mix in items
+            ]
+        )
+
+
+    @app.route(
+        "/listener/playlists/<int:playlist_id>/rename",
+        methods=["POST"]
+    )
+    def rename_listener_playlist(playlist_id):
+        from models import ListenerPlaylist
+
+        listener = get_playlist_listener()
+        if listener is None:
+            return redirect(url_for("listener_login"))
+
+        playlist = ListenerPlaylist.query.filter_by(
+            id=playlist_id,
+            listener_id=listener.id
+        ).first_or_404()
+
+        name = request.form.get("name", "").strip()
+
+        if not name or len(name) > 100:
+            flash("Enter a playlist name between 1 and 100 characters.", "warning")
+            return redirect(
+                url_for("listener_playlist_detail", playlist_id=playlist.id)
+            )
+
+        duplicate = ListenerPlaylist.query.filter(
+            ListenerPlaylist.listener_id == listener.id,
+            ListenerPlaylist.id != playlist.id,
+            db.func.lower(ListenerPlaylist.name) == name.lower()
+        ).first()
+
+        if duplicate:
+            flash("You already have another playlist with that name.", "warning")
+            return redirect(
+                url_for("listener_playlist_detail", playlist_id=playlist.id)
+            )
+
+        try:
+            playlist.name = name
+            db.session.commit()
+            flash("Playlist renamed successfully.", "success")
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Playlist rename failed")
+            flash("Could not rename your playlist.", "danger")
+
+        return redirect(
+            url_for("listener_playlist_detail", playlist_id=playlist.id)
+        )
+
+
+    @app.route(
+        "/listener/playlists/<int:playlist_id>/delete",
+        methods=["POST"]
+    )
+    def delete_listener_playlist(playlist_id):
+        from models import ListenerPlaylist
+
+        listener = get_playlist_listener()
+        if listener is None:
+            return redirect(url_for("listener_login"))
+
+        playlist = ListenerPlaylist.query.filter_by(
+            id=playlist_id,
+            listener_id=listener.id
+        ).first_or_404()
+
+        try:
+            db.session.delete(playlist)
+            db.session.commit()
+            flash("Playlist deleted successfully.", "success")
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Playlist deletion failed")
+            flash("Could not delete your playlist.", "danger")
+
+        return redirect(url_for("listener_playlists"))
+
+
+    @app.route(
+        "/listener/playlists/<int:playlist_id>/add/<int:mix_id>",
+        methods=["POST"]
+    )
+    def add_mix_to_listener_playlist(playlist_id, mix_id):
+        from models import ListenerPlaylist, ListenerPlaylistItem, Mix
+
+        listener = get_playlist_listener()
+        if listener is None:
+            return redirect(url_for("listener_login"))
+
+        playlist = ListenerPlaylist.query.filter_by(
+            id=playlist_id,
+            listener_id=listener.id
+        ).first_or_404()
+
+        mix = Mix.query.filter_by(
+            id=mix_id,
+            is_published=True
+        ).first_or_404()
+
+        existing = ListenerPlaylistItem.query.filter_by(
+            playlist_id=playlist.id,
+            mix_id=mix.id
+        ).first()
+
+        if existing:
+            flash("That mix is already in this playlist.", "info")
+        else:
+            try:
+                last_position = db.session.query(
+                    db.func.max(ListenerPlaylistItem.position)
+                ).filter_by(
+                    playlist_id=playlist.id
+                ).scalar()
+
+                db.session.add(ListenerPlaylistItem(
+                    playlist_id=playlist.id,
+                    mix_id=mix.id,
+                    position=(last_position if last_position is not None else -1) + 1
+                ))
+                db.session.commit()
+                flash("Mix added to your playlist.", "success")
+            except Exception:
+                db.session.rollback()
+                app.logger.exception("Adding mix to playlist failed")
+                flash("Could not add this mix to your playlist.", "danger")
+
+        return redirect(
+            url_for("listener_playlist_detail", playlist_id=playlist.id)
+        )
+
+
+    @app.route(
+        "/listener/playlists/<int:playlist_id>/remove/<int:mix_id>",
+        methods=["POST"]
+    )
+    def remove_mix_from_listener_playlist(playlist_id, mix_id):
+        from models import ListenerPlaylist, ListenerPlaylistItem
+
+        listener = get_playlist_listener()
+        if listener is None:
+            return redirect(url_for("listener_login"))
+
+        playlist = ListenerPlaylist.query.filter_by(
+            id=playlist_id,
+            listener_id=listener.id
+        ).first_or_404()
+
+        item = ListenerPlaylistItem.query.filter_by(
+            playlist_id=playlist.id,
+            mix_id=mix_id
+        ).first_or_404()
+
+        try:
+            db.session.delete(item)
+            db.session.commit()
+            flash("Mix removed from your playlist.", "success")
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Removing mix from playlist failed")
+            flash("Could not remove this mix.", "danger")
+
+        return redirect(
+            url_for("listener_playlist_detail", playlist_id=playlist.id)
+        )
+
+
     @app.route("/listener/logout", methods=["POST"])
     def listener_logout():
         session.pop("listener_id", None)
@@ -764,7 +1054,7 @@ def create_app():
 
     @app.route("/mix/<int:mix_id>")
     def mix_detail(mix_id):
-        from models import Mix, Listener, ListenerFavorite
+        from models import Mix, Listener, ListenerFavorite, ListenerPlaylist
 
         mix = Mix.query.filter_by(
             id=mix_id,
@@ -773,6 +1063,7 @@ def create_app():
 
         listener = None
         is_favorite = False
+        listener_playlists = []
 
         listener_id = session.get("listener_id")
 
@@ -784,6 +1075,9 @@ def create_app():
                     listener_id=listener.id,
                     mix_id=mix.id
                 ).first() is not None
+                listener_playlists = ListenerPlaylist.query.filter_by(
+                    listener_id=listener.id
+                ).order_by(ListenerPlaylist.name.asc()).all()
             else:
                 session.pop("listener_id", None)
 
@@ -800,7 +1094,8 @@ def create_app():
             mix=mix,
             related_mixes=related_mixes,
             listener=listener,
-            is_favorite=is_favorite
+            is_favorite=is_favorite,
+            listener_playlists=listener_playlists
         )
 
 

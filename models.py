@@ -269,3 +269,82 @@ class PushSubscription(db.Model):
         onupdate=datetime.utcnow,
         nullable=False
     )
+
+
+class ListenerPlaylist(db.Model):
+    __tablename__ = "listener_playlists"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    listener_id = db.Column(
+        db.Integer,
+        db.ForeignKey("listeners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    name = db.Column(db.String(100), nullable=False)
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False
+    )
+
+    listener = db.relationship("Listener")
+
+    items = db.relationship(
+        "ListenerPlaylistItem",
+        back_populates="playlist",
+        cascade="all, delete-orphan",
+        order_by="ListenerPlaylistItem.position"
+    )
+
+
+class ListenerPlaylistItem(db.Model):
+    __tablename__ = "listener_playlist_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    playlist_id = db.Column(
+        db.Integer,
+        db.ForeignKey("listener_playlists.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    mix_id = db.Column(
+        db.Integer,
+        db.ForeignKey("mixes.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    position = db.Column(db.Integer, default=0, nullable=False)
+
+    added_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
+
+    playlist = db.relationship(
+        "ListenerPlaylist",
+        back_populates="items"
+    )
+
+    mix = db.relationship("Mix")
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "playlist_id",
+            "mix_id",
+            name="uq_listener_playlist_mix"
+        ),
+        Index("ix_listener_playlist_items_playlist", "playlist_id"),
+    )
