@@ -61,6 +61,40 @@ class Mix(db.Model):
     )
 
 
+class MixRightsDeclaration(db.Model):
+    __tablename__ = "mix_rights_declarations"
+
+    id = db.Column(db.Integer, primary_key=True)
+    mix_id = db.Column(
+        db.Integer,
+        db.ForeignKey("mixes.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True
+    )
+    dj_id = db.Column(
+        db.Integer,
+        db.ForeignKey("djs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    confirmed_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+    declaration_version = db.Column(
+        db.String(30),
+        nullable=False
+    )
+    declaration_text = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    mix = db.relationship("Mix")
+    dj = db.relationship("DJ")
+
+
 class MixEvent(db.Model):
     __tablename__ = "mix_events"
 

@@ -1,5 +1,5 @@
 import os
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from uuid import uuid4
 from functools import wraps
@@ -2029,6 +2029,17 @@ def create_app():
             audio = request.files.get("audio_file")
             cover = request.files.get("cover_image")
             genre_value = request.form.get("genre_id", "").strip()
+            rights_confirmation = request.form.get("rights_confirmation")
+
+            if rights_confirmation != "yes":
+                flash(
+                    "You must confirm that you have the necessary "
+                    "rights before uploading."
+                )
+                return render_template(
+                    "dj/upload_mix.html",
+                    genres=genres
+                )
 
             if not title or len(title) > 180:
                 flash("Enter a valid mix title.")
@@ -2093,6 +2104,8 @@ def create_app():
                     else:
                         cover.save(cover_path)
 
+                from models import MixRightsDeclaration
+
                 mix = Mix(
                     title=title,
                     description=description,
@@ -2104,6 +2117,24 @@ def create_app():
                 )
 
                 db.session.add(mix)
+                db.session.flush()
+
+                declaration = MixRightsDeclaration(
+                    mix_id=mix.id,
+                    dj_id=current_user.id,
+                    confirmed_at=datetime.utcnow(),
+                    declaration_version="2026-11-09-v1",
+                    declaration_text=(
+                        "I confirm that I own or have obtained all permissions "
+                        "and licences needed to upload, host, stream and share "
+                        "this mix, including rights in the sound recordings, "
+                        "musical compositions, samples and other material it "
+                        "contains. I understand that owning the DJ mix recording "
+                        "alone does not automatically grant these rights."
+                    )
+                )
+
+                db.session.add(declaration)
                 db.session.commit()
 
                 flash("Mix uploaded successfully and submitted for review.")
