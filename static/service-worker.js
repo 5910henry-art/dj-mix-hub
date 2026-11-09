@@ -1,8 +1,8 @@
-
-const CACHE_NAME = "dj-mix-hub-pwa-v2";
+const CACHE_NAME = "dj-mix-hub-pwa-v3";
 
 const APP_ASSETS = [
     "/static/offline.html",
+    "/static/waking.html",
     "/static/css/style.css",
     "/static/manifest.json",
     "/static/pwa/icon-192.png",
@@ -21,9 +21,10 @@ self.addEventListener("activate", event => {
     event.waitUntil(
         caches.keys()
             .then(keys => Promise.all(
-                keys.filter(key => key.startsWith("dj-mix-hub-pwa-") &&
-                    key !== CACHE_NAME)
-                    .map(key => caches.delete(key))
+                keys.filter(key =>
+                    key.startsWith("dj-mix-hub-pwa-") &&
+                    key !== CACHE_NAME
+                ).map(key => caches.delete(key))
             ))
             .then(() => self.clients.claim())
     );
@@ -39,11 +40,64 @@ self.addEventListener("fetch", event => {
     if (url.origin !== self.location.origin) return;
 
     if (request.mode === "navigate") {
-        event.respondWith(
-            fetch(request).catch(async () => {
-                return await caches.match("/static/offline.html");
-            })
-        );
+        if (
+            url.pathname === "/static/waking.html" ||
+            url.pathname === "/static/offline.html"
+        ) {
+            event.respondWith(
+                caches.match(url.pathname)
+                    .then(cached => cached || fetch(request))
+            );
+            return;
+        }
+
+        event.respondWith((async () => {
+            const controller = new AbortController();
+
+            const timeout = setTimeout(
+                () => controller.abort(),
+                5000
+            );
+
+            try {
+                const response = await fetch(request, {
+                    signal: controller.signal
+                });
+
+                if (
+                    response.status === 502 ||
+                    response.status === 503 ||
+                    response.status === 504
+                ) {
+                    const waking = await caches.match(
+                        "/static/waking.html"
+                    );
+
+                    if (waking) return waking;
+                }
+
+                return response;
+
+            } catch (error) {
+                const waking = await caches.match(
+                    "/static/waking.html"
+                );
+
+                if (waking) return waking;
+
+                const offline = await caches.match(
+                    "/static/offline.html"
+                );
+
+                if (offline) return offline;
+
+                return Response.error();
+
+            } finally {
+                clearTimeout(timeout);
+            }
+        })());
+
         return;
     }
 
@@ -57,16 +111,17 @@ self.addEventListener("fetch", event => {
                 return fetch(request).then(response => {
                     if (response.ok) {
                         const copy = response.clone();
+
                         caches.open(CACHE_NAME)
                             .then(cache => cache.put(request, copy));
                     }
+
                     return response;
                 });
             })
         );
     }
 });
-
 
 self.addEventListener("push", event => {
     let data = {};
@@ -99,6 +154,7 @@ self.addEventListener("notificationclick", event => {
 
     const rawUrl =
         (event.notification.data && event.notification.data.url) || "/";
+
     const target = new URL(rawUrl, self.location.origin);
 
     if (target.origin !== self.location.origin) return;
@@ -113,6 +169,7 @@ self.addEventListener("notificationclick", event => {
                     return client.focus();
                 }
             }
+
             return self.clients.openWindow(target.href);
         })
     );

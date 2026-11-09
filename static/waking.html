@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101018">
+    <title>Waking up | DJ MIX HUB</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            background: #101018;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        main { max-width: 420px; width: 100%; }
+
+        .logo {
+            font-size: 25px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .logo span { color: #c084fc; }
+
+        .loader {
+            width: 48px;
+            height: 48px;
+            margin: 35px auto 25px;
+            border: 4px solid #343444;
+            border-top-color: #c084fc;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        h1 {
+            color: #c084fc;
+            font-size: 23px;
+        }
+
+        p {
+            color: #bbb;
+            line-height: 1.7;
+        }
+
+        #status {
+            color: #d8b4fe;
+            font-size: 14px;
+        }
+
+        button {
+            margin-top: 18px;
+            padding: 12px 24px;
+            border: 0;
+            border-radius: 9px;
+            background: #8b5cf6;
+            color: white;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="logo">🎧 DJ MIX <span>HUB</span></div>
+        <div class="loader"></div>
+
+        <h1>Waking up DJ MIX HUB...</h1>
+
+        <p>
+            Our music platform is starting up.
+            Please wait while we reconnect you.
+        </p>
+
+        <p id="status">Connecting to the server...</p>
+
+        <button onclick="checkServer()">Try again</button>
+    </main>
+
+    <script>
+        let checking = false;
+        let attempts = 0;
+
+        async function checkServer() {
+            if (checking) return;
+
+            checking = true;
+            const status = document.getElementById("status");
+
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(
+                    () => controller.abort(),
+                    8000
+                );
+
+                const response = await fetch(
+                    "/health",
+                    {
+                        method: "GET",
+                        cache: "no-store",
+                        signal: controller.signal
+                    }
+                );
+
+                clearTimeout(timeout);
+
+                if (!response.ok) {
+                    throw new Error("Server is still starting");
+                }
+
+                const data = await response.json();
+
+                if (
+                    data.status === "ok" &&
+                    data.database === "connected"
+                ) {
+                    status.textContent = "Connected! Opening DJ MIX HUB...";
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 700);
+
+                    return;
+                }
+
+                throw new Error("Database is not ready");
+
+            } catch (error) {
+                attempts++;
+
+                status.textContent =
+                    "Still waking up... Checking again shortly.";
+
+            } finally {
+                checking = false;
+            }
+
+            setTimeout(checkServer, 4000);
+        }
+
+        checkServer();
+    </script>
+</body>
+</html>
