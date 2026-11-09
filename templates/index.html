@@ -440,7 +440,7 @@ if ("serviceWorker" in navigator) {
         });
     }
 
-    async function loadLatest(url, updateHistory) {
+    async function loadLatest(url, updateHistory, scrollToFirstResult) {
         const latest = document.querySelector("#latest");
         if (!latest) return;
 
@@ -469,6 +469,14 @@ if ("serviceWorker" in navigator) {
         }
 
         latest.replaceWith(newSection);
+
+        if (scrollToFirstResult) {
+            const firstResult = newSection.querySelector(".mix-card");
+            (firstResult || newSection).scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+        }
 
         if (genreList) {
             const selectedGenre = url.searchParams.get("genre");
@@ -545,7 +553,7 @@ if ("serviceWorker" in navigator) {
                 url.searchParams.delete("q");
             }
 
-            loadLatest(url, true).catch(function (error) {
+            loadLatest(url, true, true).catch(function (error) {
                 console.error("AJAX search failed:", error);
                 window.location.href = url.pathname + url.search;
             });
