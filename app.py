@@ -1326,6 +1326,17 @@ def create_app():
         )
 
 
+    @app.route("/ads.txt")
+    def ads_txt():
+        publisher_line = (
+            "google.com, pub-4763557499711194, DIRECT, "
+            "f08c47fec0942fa0"
+        )
+        return app.response_class(
+            publisher_line + chr(10),
+            mimetype="text/plain"
+        )
+
     @app.route("/contact")
     def contact_page():
         return render_template("legal_page.html", page="contact")
