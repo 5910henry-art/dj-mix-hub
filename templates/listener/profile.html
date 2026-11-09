@@ -3,100 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>My Account | DJ MIX HUB</title>
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/style.css') }}">
+    <title>My Profile | DJ MIX HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        .profile-container {
-            max-width: 750px;
-            margin: 55px auto;
-            padding: 25px;
-        }
-        .profile-card {
-            background: #191923;
-            border: 1px solid #343444;
-            border-radius: 18px;
-            padding: 30px;
-            color: white;
-        }
-        .profile-avatar {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            background: #d9a441;
-            color: #111;
-            display: grid;
-            place-items: center;
-            font-size: 35px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-        .profile-info {
-            padding: 14px 0;
-            border-bottom: 1px solid #343444;
-        }
-        .profile-info small { color: #aaa; }
-        .profile-info p { margin-bottom: 0; }
-        .profile-links {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 25px;
-        }
-        .profile-links a {
-            padding: 12px 18px;
-            border-radius: 8px;
-            background: #d9a441;
-            color: #111;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        .profile-links a.secondary {
-            background: #343444;
-            color: white;
+        body { background:#101018; color:#f5f5f7; }
+        .profile-wrap { max-width:900px; margin:35px auto; padding:0 18px 45px; }
+        .back-link { color:#d9a441; text-decoration:none; display:inline-block; margin-bottom:20px; }
+        .profile-card { background:linear-gradient(145deg,#20202c,#171720); border:1px solid #343444; border-radius:22px; overflow:hidden; }
+        .profile-cover { height:150px; background:linear-gradient(120deg,#d9a441,#76521a,#242432); }
+        .profile-main { padding:0 28px 28px; }
+        .profile-top { display:flex; align-items:end; gap:18px; margin-top:-55px; flex-wrap:wrap; }
+        .avatar { width:112px; height:112px; border-radius:50%; border:5px solid #20202c; object-fit:cover; background:#d9a441; color:#151515; display:grid; place-items:center; font-size:42px; font-weight:800; }
+        .profile-heading { padding-bottom:8px; }
+        .profile-heading h1 { margin:0 0 5px; font-size:27px; }
+        .profile-heading p { margin:0; color:#aaa; }
+        .profile-actions { margin-left:auto; padding-bottom:8px; }
+        .btn { display:inline-block; padding:11px 17px; border-radius:10px; text-decoration:none; font-weight:700; background:#d9a441; color:#151515; border:0; }
+        .section { margin-top:28px; }
+        .section h2 { font-size:17px; margin-bottom:13px; }
+        .info-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+        .info { background:#11111a; border:1px solid #343444; padding:15px; border-radius:12px; min-width:0; }
+        .info small { display:block; color:#aaa; margin-bottom:7px; }
+        .info p { margin:0; overflow-wrap:anywhere; }
+        .bio { color:#ddd; line-height:1.6; }
+        .quick-links { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+        .quick-links a { background:#11111a; border:1px solid #343444; border-radius:13px; padding:17px 12px; color:white; text-decoration:none; font-weight:700; text-align:center; }
+        .quick-links a:hover { border-color:#d9a441; }
+        .logout { margin-top:25px; }
+        .logout button { background:transparent; border:1px solid #755050; color:#ffaaaa; padding:10px 17px; border-radius:9px; cursor:pointer; }
+        .flash { padding:12px 15px; margin-bottom:12px; background:#292536; border:1px solid #51415e; border-radius:10px; }
+        @media(max-width:600px) {
+            .profile-main { padding:0 17px 22px; }
+            .profile-top { align-items:center; }
+            .profile-heading h1 { font-size:22px; }
+            .profile-actions { margin-left:0; width:100%; }
+            .profile-actions .btn { display:block; text-align:center; }
+            .info-grid { grid-template-columns:1fr; }
+            .quick-links { grid-template-columns:1fr; }
         }
     </style>
 </head>
 <body>
-    <main class="profile-container">
-        <a href="/">← DJ MIX HUB Home</a>
+<main class="profile-wrap">
+    <a class="back-link" href="/">← DJ MIX HUB Home</a>
 
-        <div class="profile-card">
-            <div class="profile-avatar">
-                {{ (listener.display_name or listener.username)[0]|upper }}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <section class="profile-card">
+        <div class="profile-cover"></div>
+        <div class="profile-main">
+            <div class="profile-top">
+                {% if listener.profile_image %}
+                    <img class="avatar" src="{{ url_for('uploaded_file', filename=listener.profile_image) }}" alt="Profile photo">
+                {% else %}
+                    <div class="avatar">{{ (listener.display_name or listener.username)[0]|upper }}</div>
+                {% endif %}
+                <div class="profile-heading">
+                    <h1>{{ listener.display_name or listener.username }}</h1>
+                    <p>@{{ listener.username }}</p>
+                </div>
+                <div class="profile-actions">
+                    <a class="btn" href="{{ url_for('listener_edit_profile') }}">✏️ Edit Profile</a>
+                </div>
             </div>
 
-            <h1>{{ listener.display_name or listener.username }}</h1>
-            <p>@{{ listener.username }}</p>
-
-            <div class="profile-info">
-                <small>Email address</small>
-                <p>{{ listener.email }}</p>
+            <div class="section">
+                <h2>Account information</h2>
+                <div class="info-grid">
+                    <div class="info"><small>Email address</small><p>{{ listener.email }}</p></div>
+                    <div class="info"><small>Member since</small><p>{{ listener.created_at.strftime("%d %B %Y") if listener.created_at else "Unknown" }}</p></div>
+                </div>
             </div>
 
-            <div class="profile-info">
-                <small>About me</small>
-                <p>{{ listener.bio or "No biography added yet." }}</p>
+            <div class="section">
+                <h2>About me</h2>
+                <div class="info bio">{{ listener.bio or "You haven't added a biography yet. Tell other music lovers a little about yourself." }}</div>
             </div>
 
-            <div class="profile-info">
-                <small>Member since</small>
-                <p>{{ listener.created_at.strftime("%d %B %Y") if listener.created_at else "Unknown" }}</p>
+            <div class="section">
+                <h2>Your DJ MIX HUB</h2>
+                <div class="quick-links">
+                    <a href="/">🎧<br>Explore Mixes</a>
+                    <a href="{{ url_for('listener_favorites') }}">❤️<br>My Favourites</a>
+                    <a href="{{ url_for('listener_playlists') }}">🎵<br>My Playlists</a>
+                </div>
             </div>
 
-            <div class="profile-links">
-                <a href="/">Explore Mixes</a>
-                <a href="{{ url_for('listener_favorites') }}" class="secondary">❤️ My Favourite Mixes</a>
-                <a href="{{ url_for('listener_playlists') }}" class="secondary">🎵 My Playlists</a>
-            </div>
-
-            <form action="{{ url_for('listener_logout') }}"
-                  method="POST" style="margin-top:25px;">
-                <input type="hidden" name="csrf_token"
-                       value="{{ csrf_token() }}">
+            <form class="logout" action="{{ url_for('listener_logout') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit">Log Out</button>
             </form>
         </div>
-    </main>
+    </section>
+</main>
 </body>
 </html>

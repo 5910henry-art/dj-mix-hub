@@ -216,7 +216,7 @@ def _validate_image_key(filename):
     folder, separator, basename = filename.partition("/")
 
     if (
-        folder not in {"djs", "ads"}
+        folder not in {"djs", "ads", "listeners"}
         or not separator
         or not basename
         or "/" in basename

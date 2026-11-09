@@ -437,6 +437,258 @@ def create_app():
         )
 
 
+    @app.route("/listener/profile/edit", methods=["GET", "POST"])
+    def listener_edit_profile():
+        from models import Listener
+        from sqlalchemy.exc import IntegrityError
+        from audio_storage import (
+            filebase_enabled, upload_image, delete_image
+        )
+
+        listener_id = session.get("listener_id")
+        if not listener_id:
+            flash("Please log in to edit your profile.")
+            return redirect(url_for("listener_login"))
+
+        listener = db.session.get(Listener, listener_id)
+        if listener is None:
+            session.pop("listener_id", None)
+            flash("Please log in again.")
+            return redirect(url_for("listener_login"))
+
+        form_data = request.form if request.method == "POST" else None
+
+        if request.method == "POST":
+            display_name = request.form.get("display_name", "").strip()
+            username = request.form.get("username", "").strip()
+            email = request.form.get("email", "").strip().lower()
+            bio = request.form.get("bio", "").strip()
+
+            if not username or not email:
+                flash("Username and email are required.")
+                return render_template(
+                    "listener/edit_profile.html",
+                    listener=listener,
+                    form_data=form_data
+                )
+
+            if len(username) > 80:
+                flash("Username must not exceed 80 characters.")
+            elif (
+                len(email) > 150
+                or "@" not in email
+                or "." not in email.split("@")[-1]
+            ):
+                flash("Please enter a valid email address.")
+            elif len(display_name) > 120:
+                flash("Display name must not exceed 120 characters.")
+            elif len(bio) > 1000:
+                flash("Your biography must not exceed 1,000 characters.")
+            elif Listener.query.filter(
+                Listener.id != listener.id,
+                Listener.username.ilike(username)
+            ).first():
+                flash("That username is already in use.")
+            elif Listener.query.filter(
+                Listener.id != listener.id,
+                Listener.email.ilike(email)
+            ).first():
+                flash("That email address is already in use.")
+            else:
+                photo = request.files.get("profile_image")
+                new_photo = None
+                photo_uploaded_remote = False
+                old_photo = listener.profile_image
+
+                if photo and photo.filename:
+                    from io import BytesIO
+
+                    ext = os.path.splitext(
+                        secure_filename(photo.filename)
+                    )[1].lower()
+
+                    if ext not in {".jpg", ".jpeg", ".png", ".webp"}:
+                        flash("Profile photo must be JPG, PNG or WEBP.")
+                        return render_template(
+                            "listener/edit_profile.html",
+                            listener=listener,
+                            form_data=form_data
+                        )
+
+                    photo_bytes = photo.stream.read(5 * 1024 * 1024 + 1)
+                    photo.stream.seek(0)
+
+                    if not photo_bytes:
+                        flash("The selected photo is empty.")
+                        return render_template(
+                            "listener/edit_profile.html",
+                            listener=listener,
+                            form_data=form_data
+                        )
+
+                    if len(photo_bytes) > 5 * 1024 * 1024:
+                        flash("Profile photo must be 5 MB or smaller.")
+                        return render_template(
+                            "listener/edit_profile.html",
+                            listener=listener,
+                            form_data=form_data
+                        )
+
+                    valid_image = (
+                        photo_bytes.startswith(b"\xff\xd8\xff")
+                        if ext in {".jpg", ".jpeg"}
+                        else photo_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+                        if ext == ".png"
+                        else (
+                            len(photo_bytes) >= 12
+                            and photo_bytes[:4] == b"RIFF"
+                            and photo_bytes[8:12] == b"WEBP"
+                        )
+                    )
+
+                    if not valid_image:
+                        flash("The uploaded file is not a valid matching image.")
+                        return render_template(
+                            "listener/edit_profile.html",
+                            listener=listener,
+                            form_data=form_data
+                        )
+
+                    new_photo = os.path.join(
+                        "listeners", uuid4().hex + ext
+                    )
+
+                try:
+                    if new_photo:
+                        if filebase_enabled():
+                            upload_image(BytesIO(photo_bytes), new_photo)
+                            photo_uploaded_remote = True
+                        else:
+                            listener_folder = os.path.join(
+                                app.config["UPLOAD_FOLDER"], "listeners"
+                            )
+                            os.makedirs(listener_folder, exist_ok=True)
+                            photo_path = os.path.join(
+                                app.config["UPLOAD_FOLDER"], new_photo
+                            )
+                            with open(photo_path, "wb") as image_file:
+                                image_file.write(photo_bytes)
+
+                    listener.username = username
+                    listener.email = email
+                    listener.display_name = display_name or username
+                    listener.bio = bio or None
+
+                    if new_photo:
+                        listener.profile_image = new_photo
+
+                    db.session.commit()
+
+                    # Remove the previous listener photo only after a
+                    # successful update and only when no other listener uses it.
+                    if (
+                        new_photo
+                        and old_photo
+                        and old_photo.startswith("listeners/")
+                        and old_photo != new_photo
+                    ):
+                        try:
+                            still_used = Listener.query.filter(
+                                Listener.profile_image == old_photo,
+                                Listener.id != listener.id
+                            ).first()
+
+                            if not still_used:
+                                if filebase_enabled():
+                                    delete_image(old_photo)
+
+                                upload_folder = os.path.realpath(
+                                    app.config["UPLOAD_FOLDER"]
+                                )
+                                old_path = os.path.realpath(
+                                    os.path.join(upload_folder, old_photo)
+                                )
+
+                                if (
+                                    os.path.commonpath(
+                                        [upload_folder, old_path]
+                                    ) == upload_folder
+                                    and os.path.isfile(old_path)
+                                ):
+                                    os.remove(old_path)
+                        except Exception:
+                            app.logger.exception(
+                                "Could not remove previous listener photo."
+                            )
+
+                    flash("Your profile has been updated.")
+                    return redirect(url_for("listener_profile"))
+
+                except IntegrityError:
+                    db.session.rollback()
+
+                    # Remove the newly uploaded photo if the database
+                    # rejects the profile update.
+                    if new_photo:
+                        if photo_uploaded_remote:
+                            try:
+                                delete_image(new_photo)
+                            except Exception:
+                                app.logger.exception(
+                                    "Could not remove rejected listener photo upload."
+                                )
+                        else:
+                            upload_folder = os.path.realpath(
+                                app.config["UPLOAD_FOLDER"]
+                            )
+                            new_path = os.path.realpath(
+                                os.path.join(upload_folder, new_photo)
+                            )
+                            if (
+                                os.path.commonpath(
+                                    [upload_folder, new_path]
+                                ) == upload_folder
+                                and os.path.isfile(new_path)
+                            ):
+                                os.remove(new_path)
+
+                    flash("That username or email is already in use.")
+                except Exception:
+                    db.session.rollback()
+
+                    if new_photo:
+                        if photo_uploaded_remote:
+                            try:
+                                delete_image(new_photo)
+                            except Exception:
+                                app.logger.exception(
+                                    "Could not remove failed listener photo upload."
+                                )
+                        else:
+                            upload_folder = os.path.realpath(
+                                app.config["UPLOAD_FOLDER"]
+                            )
+                            new_path = os.path.realpath(
+                                os.path.join(upload_folder, new_photo)
+                            )
+                            if (
+                                os.path.commonpath(
+                                    [upload_folder, new_path]
+                                ) == upload_folder
+                                and os.path.isfile(new_path)
+                            ):
+                                os.remove(new_path)
+
+                    app.logger.exception("Listener profile update failed.")
+                    flash("Could not update your profile. Please try again.")
+
+        return render_template(
+            "listener/edit_profile.html",
+            listener=listener,
+            form_data=form_data
+        )
+
+
     @app.route("/listener/favorites")
     def listener_favorites():
         from models import Listener, ListenerFavorite, Mix
@@ -961,7 +1213,7 @@ def create_app():
 
     @app.route("/uploads/<path:filename>")
     def uploaded_file(filename):
-        from models import Mix, DJ, Advertisement
+        from models import Mix, DJ, Advertisement, Listener
         from audio_storage import (
             filebase_enabled, stream_cover, stream_image
         )
@@ -992,6 +1244,13 @@ def create_app():
         if (
             filename.startswith("ads/")
             and Advertisement.query.filter_by(image_file=filename).first()
+        ):
+            return stream_image(filename)
+
+        # Only database-linked listener profile photos may be read remotely.
+        if (
+            filename.startswith("listeners/")
+            and Listener.query.filter_by(profile_image=filename).first()
         ):
             return stream_image(filename)
 

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edit Profile | DJ MIX HUB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body { background:#101018; color:#f5f5f7; }
+        .edit-wrap { max-width:700px; margin:35px auto; padding:0 18px 45px; }
+        .back-link { color:#d9a441; text-decoration:none; display:inline-block; margin-bottom:20px; }
+        .edit-card { background:#1b1b26; border:1px solid #343444; border-radius:18px; padding:26px; }
+        .edit-card h1 { margin:0 0 7px; }
+        .muted { color:#aaa; margin-top:0; }
+        .field { margin-top:19px; }
+        .field label { display:block; margin-bottom:8px; font-weight:700; }
+        .field input,.field textarea { width:100%; box-sizing:border-box; padding:13px; border-radius:9px; border:1px solid #414152; background:#11111a; color:white; font:inherit; }
+        .field textarea { min-height:120px; resize:vertical; }
+        .field small { display:block; color:#aaa; margin-top:6px; }
+        .photo-row { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+        .photo-preview { width:90px; height:90px; object-fit:cover; border-radius:50%; background:#d9a441; border:3px solid #414152; }
+        .save-btn { width:100%; margin-top:25px; padding:14px; border:0; border-radius:10px; background:#d9a441; color:#151515; font-weight:800; font-size:16px; cursor:pointer; }
+        .cancel { display:block; text-align:center; color:#bbb; margin-top:17px; text-decoration:none; }
+        .flash { padding:12px 15px; margin-bottom:12px; background:#292536; border:1px solid #51415e; border-radius:10px; }
+    </style>
+</head>
+<body>
+<main class="edit-wrap">
+    <a class="back-link" href="{{ url_for('listener_profile') }}">← Back to my profile</a>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <section class="edit-card">
+        <h1>Edit your profile</h1>
+        <p class="muted">Update how you appear on DJ MIX HUB.</p>
+
+        {% set profile_values = form_data if form_data is not none else {} %}
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="field">
+                <label for="profile_image">Profile photo</label>
+                <div class="photo-row">
+                    {% if listener.profile_image %}
+                        <img id="photoPreview" class="photo-preview" src="{{ url_for('uploaded_file', filename=listener.profile_image) }}" alt="Current profile photo">
+                    {% else %}
+                        <div id="photoInitial" class="photo-preview" style="display:grid;place-items:center;color:#151515;font-size:32px;font-weight:800;">{{ (listener.display_name or listener.username)[0]|upper }}</div>
+                        <img id="photoPreview" class="photo-preview" src="" alt="New profile photo preview" style="display:none;">
+                    {% endif %}
+                    <div>
+                        <input id="profile_image" type="file" name="profile_image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                        <small>JPG, PNG or WEBP. Maximum size: 5 MB.</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="display_name">Display name</label>
+                <input id="display_name" type="text" name="display_name" maxlength="120" value="{{ profile_values.get('display_name', listener.display_name or '') }}" placeholder="Your display name">
+            </div>
+
+            <div class="field">
+                <label for="username">Username *</label>
+                <input id="username" type="text" name="username" maxlength="80" required value="{{ profile_values.get('username', listener.username) }}">
+            </div>
+
+            <div class="field">
+                <label for="email">Email address *</label>
+                <input id="email" type="email" name="email" maxlength="150" required value="{{ profile_values.get('email', listener.email) }}">
+            </div>
+
+            <div class="field">
+                <label for="bio">About me</label>
+                <textarea id="bio" name="bio" maxlength="1000" placeholder="Tell other music lovers about yourself...">{{ profile_values.get('bio', listener.bio or '') }}</textarea>
+                <small>Maximum 1,000 characters.</small>
+            </div>
+
+            <button class="save-btn" type="submit">Save Changes</button>
+        </form>
+
+        <a class="cancel" href="{{ url_for('listener_profile') }}">Cancel</a>
+    </section>
+</main>
+<script>
+document.getElementById("profile_image").addEventListener("change", function () {
+    const file = this.files && this.files[0];
+    if (!file) return;
+
+    const preview = document.getElementById("photoPreview");
+    const initial = document.getElementById("photoInitial");
+
+    if (preview) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+    }
+    if (initial) initial.style.display = "none";
+});
+</script>
+</body>
+</html>
