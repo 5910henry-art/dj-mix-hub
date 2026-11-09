@@ -1407,6 +1407,38 @@ def create_app():
             public_listeners=public_listeners
         )
 
+
+    @app.route("/latest-mixes")
+    def latest_mixes_partial():
+        from models import Mix, DJ
+
+        search = request.args.get("q", "").strip()
+        genre_id = request.args.get("genre", type=int)
+
+        query = Mix.query.filter_by(is_published=True)
+
+        if search:
+            query = query.join(Mix.dj).filter(
+                or_(
+                    Mix.title.ilike(f"%{search}%"),
+                    DJ.username.ilike(f"%{search}%"),
+                    DJ.display_name.ilike(f"%{search}%")
+                )
+            )
+
+        if genre_id:
+            query = query.filter(Mix.genre_id == genre_id)
+
+        mixes = query.order_by(
+            Mix.created_at.desc()
+        ).limit(30).all()
+
+        return render_template(
+            "partials/latest_mixes.html",
+            mixes=mixes,
+            search=search
+        )
+
     @app.route("/uploads/<path:filename>")
     def uploaded_file(filename):
         from models import Mix, DJ, Advertisement, Listener

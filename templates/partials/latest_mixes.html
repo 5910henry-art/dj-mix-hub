@@ -1,0 +1,81 @@
+    <section class="section" id="latest">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">FRESH FROM THE DECKS</p>
+                <h2>
+                    {% if search %}Search Results{% else %}Latest Mixes{% endif %}
+                </h2>
+            </div>
+            <div class="carousel-heading-actions">
+                <span class="mix-count">{{ mixes|length }} mixes</span>
+                <div class="carousel-controls">
+                    <button type="button" aria-label="Previous mixes"
+                            aria-controls="mixes-track"
+                            data-carousel-target="mixes-track"
+                            data-scroll-direction="-1">‹</button>
+                    <button type="button" aria-label="Next mixes"
+                            aria-controls="mixes-track"
+                            data-carousel-target="mixes-track"
+                            data-scroll-direction="1">›</button>
+                </div>
+            </div>
+        </div>
+
+        {% if mixes %}
+        <div class="mix-grid" id="mixes-track">
+            {% for mix in mixes %}
+            <article class="mix-card">
+                <a href="{{ url_for('mix_detail', mix_id=mix.id) }}" class="mix-cover-link">
+                <div class="cover-art">
+                    {% if mix.cover_image %}
+                        {% if mix.cover_image.startswith('http') %}
+                        <img src="{{ mix.cover_image }}" alt="{{ mix.title }}">
+                        {% else %}
+                        <img src="{{ url_for('uploaded_file', filename=mix.cover_image) }}"
+                             alt="{{ mix.title }}">
+                        {% endif %}
+                    {% else %}
+                    <div class="cover-placeholder">
+                        <span>♫</span>
+                        <small>DJ MIX HUB</small>
+                    </div>
+                    {% endif %}
+                </div>
+                </a>
+
+                <div class="mix-info">
+                    <h3><a href="{{ url_for('mix_detail', mix_id=mix.id) }}">{{ mix.title }}</a></h3>
+                    <p class="dj-name">
+                        {{ mix.dj.display_name or mix.dj.username }}
+                    </p>
+
+                    {% if mix.genre %}
+                    <span class="genre-tag">{{ mix.genre.name }}</span>
+                    {% endif %}
+
+                    <div class="mix-stats">
+                        <span>▶ {{ mix.plays }} plays</span>
+                        <span>↓ {{ mix.downloads }} downloads</span>
+                    </div>
+
+                    <audio controls preload="none"
+                           src="{{ url_for('stream_mix', mix_id=mix.id) }}">
+                        Your browser does not support audio playback.
+                    </audio>
+
+                    <a class="download-button"
+                       href="{{ url_for('download_mix', mix_id=mix.id) }}">
+                        ↓ Download Mix
+                    </a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">♫</div>
+            <h3>No mixes yet</h3>
+            <p>Your next favourite mix will appear here.</p>
+        </div>
+        {% endif %}
+    </section>
