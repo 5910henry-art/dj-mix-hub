@@ -6,37 +6,96 @@
 <title>{{ playlist.name }} | DJ MIX HUB</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 <style>
-.page{max-width:1100px;margin:40px auto;padding:20px;color:#fff}
-.panel,.track,.empty{background:#191923;border:1px solid #343444;border-radius:16px;padding:20px}
-.panel{margin:20px 0}
+:root{--gold:#d9a441;--gold-light:#f4ca72;--bg:#0c0c12;--panel:#171720;--panel2:#20202c;--line:#30303e;--muted:#a5a5b4}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#fff;font-family:Arial,sans-serif}
+.page{width:min(1120px,100%);margin:auto;padding:35px 22px 65px}
+.back{display:inline-flex;color:var(--gold-light);text-decoration:none;margin-bottom:25px;font-weight:600}
+.back:hover{color:white}
+.hero{position:relative;overflow:hidden;display:flex;align-items:center;gap:24px;padding:30px;border:1px solid #5c482b;border-radius:22px;background:radial-gradient(circle at 85% 15%,#5c431e88,transparent 35%),linear-gradient(120deg,#28202a,#15151e 70%);margin-bottom:25px}
+.hero-art{width:125px;height:125px;flex-shrink:0;border-radius:20px;display:grid;place-items:center;font-size:55px;background:linear-gradient(145deg,#76551f,#171720);border:1px solid #d9a44188;box-shadow:0 12px 35px #0007}
+.eyebrow{font-size:11px;letter-spacing:2px;color:var(--gold-light);font-weight:800;text-transform:uppercase}
+.hero h1{font-size:clamp(25px,5vw,38px);margin:9px 0;overflow-wrap:anywhere}
+.muted{color:var(--muted);line-height:1.6}
+.hero .muted{margin:0}
+.panel,.player,.track,.empty{background:var(--panel);border:1px solid var(--line);border-radius:17px}
+.panel{padding:20px;margin:20px 0}
+.panel-title{font-size:17px;margin:0 0 15px}
 .actions,.track-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .actions form,.track-actions form{display:flex;gap:8px;flex-wrap:wrap;margin:0}
-input{padding:10px;border-radius:8px;border:1px solid #555;background:#101018;color:white}
-button,.action-link{border:0;border-radius:8px;padding:10px 14px;background:#d9a441;color:#111;font-weight:bold;cursor:pointer;text-decoration:none}
+input{min-width:0;padding:11px 13px;border-radius:9px;border:1px solid #414151;background:#101018;color:white;font-size:14px}
+input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px #d9a44122}
+button,.action-link{border:0;border-radius:9px;padding:11px 15px;background:var(--gold);color:#17120a;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:.2s}
+button:hover,.action-link:hover{background:var(--gold-light);transform:translateY(-1px)}
 .danger{background:#762b35;color:white}
-.muted{color:#aaa}.back{display:inline-block;margin-bottom:18px;color:#d9a441}
-.player{background:#101018;border:1px solid #343444;border-radius:14px;padding:18px;margin:20px 0}
-.player audio{width:100%;margin-top:12px}
-.track-list{display:grid;gap:13px;margin-top:20px}
-.track{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
-.track h3{margin:0 0 5px}
-.empty{text-align:center;padding:40px 20px}
+.danger:hover{background:#983b48}
+.player{padding:24px;margin:25px 0;background:radial-gradient(circle at 100% 0%,#4a361d66,transparent 45%),#171720;border-color:#57452a}
+.player-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.player h2{font-size:20px;margin:0}
+.player-tag{font-size:11px;color:var(--gold-light);letter-spacing:1px}
+#nowPlaying{margin:8px 0 17px;overflow-wrap:anywhere}
+.player audio{width:100%;margin-top:17px;display:block}
+.track-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:30px 0 15px}
+.track-heading h2{margin:0;font-size:21px}
+.track-list{display:grid;gap:12px}
+.track{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:17px;transition:border-color .2s,background .2s}
+.track:hover{border-color:#72562e;background:#1d1d28}
+.track-info{display:flex;align-items:center;gap:14px;min-width:0}
+.track-number{width:42px;height:42px;flex-shrink:0;border-radius:12px;background:#29232a;color:var(--gold-light);display:grid;place-items:center;font-weight:800}
+.track h3{font-size:16px;margin:0 0 5px;overflow-wrap:anywhere}
+.track p{font-size:13px;margin:0}
+.track-actions{justify-content:flex-end}
+.play-track{background:#29232a;color:var(--gold-light);border:1px solid #5b4729}
+.play-track:hover{background:#40311c;color:white}
+.empty{text-align:center;padding:48px 20px}
+.empty-icon{font-size:45px;margin-bottom:12px}
+.empty h2{margin:0 0 8px}
+.empty p{margin:0 auto 20px;max-width:420px}
+@media(max-width:650px){
+.page{padding:23px 14px 45px}
+.hero{padding:20px;gap:15px}
+.hero-art{width:78px;height:78px;font-size:37px;border-radius:15px}
+.panel{padding:16px}
+.actions{align-items:stretch}
+.actions form:first-child{flex:1}
+.actions form:first-child input{width:100%;flex:1}
+.actions form button{white-space:nowrap}
+.player{padding:18px}
+.track{align-items:flex-start;flex-direction:column}
+.track-info{width:100%}
+.track-actions{width:100%;justify-content:flex-start}
+.track-actions .action-link,.track-actions button{flex:1}
+.track-actions form{flex:1}
+.track-actions form button{width:100%}
+}
+@media(max-width:390px){
+.actions form:first-child{flex-direction:column}
+.actions form:first-child button{width:100%}
+}
 </style>
 </head>
 <body>
 <main class="page">
-<a class="back" href="{{ url_for('listener_playlists') }}">← My Playlists</a>
-<h1>🎵 {{ playlist.name }}</h1>
-<p class="muted">{{ items|length }} mix{{ '' if items|length == 1 else 'es' }}</p>
+<a class="back" href="{{ url_for('listener_playlists') }}">← All Playlists</a>
+
+<header class="hero">
+<div class="hero-art">♫</div>
+<div>
+<div class="eyebrow">Your personal collection</div>
+<h1>{{ playlist.name }}</h1>
+<p class="muted">{{ items|length }} mix{{ '' if items|length == 1 else 'es' }} in this playlist</p>
+</div>
+</header>
 
 <section class="panel">
+<h2 class="panel-title">Playlist settings</h2>
 <div class="actions">
 <form action="{{ url_for('rename_listener_playlist', playlist_id=playlist.id) }}" method="POST">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-<input type="text" name="name" value="{{ playlist.name }}" maxlength="100" required aria-label="Playlist name">
+<input type="text" name="name" value="{{ playlist.name }}" maxlength="100" required aria-label="New playlist name">
 <button type="submit">Rename</button>
 </form>
-<form action="{{ url_for('delete_listener_playlist', playlist_id=playlist.id) }}" method="POST" onsubmit="return confirm('Delete this playlist?')">
+<form action="{{ url_for('delete_listener_playlist', playlist_id=playlist.id) }}" method="POST" onsubmit="return confirm('Delete this playlist permanently?')">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <button type="submit" class="danger">Delete Playlist</button>
 </form>
@@ -45,7 +104,10 @@ button,.action-link{border:0;border-radius:8px;padding:10px 14px;background:#d9a
 
 {% if items %}
 <section class="player">
-<h2>▶ Playlist Player</h2>
+<div class="player-top">
+<h2>♫ Playlist Player</h2>
+<span class="player-tag">NOW PLAYING</span>
+</div>
 <p id="nowPlaying" class="muted">Ready to play {{ tracks|length }} mixes</p>
 <div class="track-actions">
 <button type="button" id="playAll">▶ Play All</button>
@@ -54,16 +116,25 @@ button,.action-link{border:0;border-radius:8px;padding:10px 14px;background:#d9a
 <audio id="playlistAudio" controls preload="none"></audio>
 </section>
 
+<div class="track-heading">
+<h2>Your tracks</h2>
+<span class="muted">{{ items|length }} mixes</span>
+</div>
+
 <section class="track-list">
 {% for item, mix in items %}
 <article class="track">
+<div class="track-info">
+<div class="track-number">{{ '%02d'|format(loop.index) }}</div>
 <div>
-<h3>{{ loop.index }}. {{ mix.title }}</h3>
+<h3>{{ mix.title }}</h3>
 <p class="muted">DJ: {{ mix.dj.display_name or mix.dj.username }}</p>
 </div>
+</div>
 <div class="track-actions">
-<a class="action-link" href="{{ url_for('mix_detail', mix_id=mix.id) }}">Open Mix</a>
-<form action="{{ url_for('remove_mix_from_listener_playlist', playlist_id=playlist.id, mix_id=mix.id) }}" method="POST" onsubmit="return confirm('Remove this mix?')">
+<button type="button" class="play-track" data-index="{{ loop.index0 }}">▶ Play</button>
+<a class="action-link" href="{{ url_for('mix_detail', mix_id=mix.id) }}">Open Mix ↗</a>
+<form action="{{ url_for('remove_mix_from_listener_playlist', playlist_id=playlist.id, mix_id=mix.id) }}" method="POST" onsubmit="return confirm('Remove this mix from the playlist?')">
 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 <button type="submit" class="danger">Remove</button>
 </form>
@@ -73,9 +144,10 @@ button,.action-link{border:0;border-radius:8px;padding:10px 14px;background:#d9a
 </section>
 {% else %}
 <div class="empty">
-<h2>This playlist is empty</h2>
-<p>Open a published mix and use Add to Playlist.</p>
-<a class="action-link" href="{{ url_for('home') }}">Explore Mixes</a>
+<div class="empty-icon">♫</div>
+<h2>This playlist is waiting for music</h2>
+<p>Explore DJ MIX HUB, find a published mix you love, and use Add to Playlist to put it here.</p>
+<a class="action-link" href="{{ url_for('home') }}">Explore Mixes →</a>
 </div>
 {% endif %}
 </main>
@@ -90,10 +162,15 @@ button,.action-link{border:0;border-radius:8px;padding:10px 14px;background:#d9a
 
     function loadTrack(index, autoplay) {
         if (!tracks.length) return;
-        current = index;
+        current = (index + tracks.length) % tracks.length;
         audio.src = tracks[current].url;
         label.textContent = 'Now playing: ' + tracks[current].title +
             ' — ' + tracks[current].dj + ' (' + (current + 1) + ' of ' + tracks.length + ')';
+
+        document.querySelectorAll('.play-track').forEach(function (button) {
+            button.textContent = Number(button.dataset.index) === current ? '♫ Playing' : '▶ Play';
+        });
+
         if (autoplay) {
             audio.play().catch(function () {
                 label.textContent += ' — press Play to start';
@@ -106,12 +183,25 @@ button,.action-link{border:0;border-radius:8px;padding:10px 14px;background:#d9a
     });
 
     document.getElementById('nextTrack').addEventListener('click', function () {
-        loadTrack((current + 1) % tracks.length, true);
+        loadTrack(current + 1, true);
+    });
+
+    document.querySelectorAll('.play-track').forEach(function (button) {
+        button.addEventListener('click', function () {
+            loadTrack(Number(button.dataset.index), true);
+        });
     });
 
     audio.addEventListener('ended', function () {
-        if (current + 1 < tracks.length) loadTrack(current + 1, true);
-        else label.textContent = 'Playlist finished.';
+        if (current + 1 < tracks.length) {
+            loadTrack(current + 1, true);
+        } else {
+            label.textContent = 'Playlist finished.';
+            document.querySelectorAll('.play-track').forEach(function (button) {
+                button.textContent = '▶ Play';
+            });
+            current = -1;
+        }
     });
 
     loadTrack(0, false);
