@@ -145,15 +145,29 @@ tbody tr:hover{background:#ffffff06}
 }
 .status.published{background:#153b30;color:#6ce0ae}
 .status.draft{background:#3a2c1b;color:#ffc77e}
-.manage{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.manage a{color:#c6a6ff;font-weight:700}
+.manage{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .inline-form{display:inline}
 .small-btn{
-    border:0;background:transparent;color:#c6a6ff;
-    padding:3px;cursor:pointer;font-size:11px;font-weight:700
+    display:inline-flex;align-items:center;justify-content:center;
+    border:1px solid transparent;border-radius:7px;
+    padding:7px 11px;cursor:pointer;
+    font-size:11px;font-weight:700;text-decoration:none;
+    white-space:nowrap;transition:background .2s,transform .2s
 }
-.small-btn.delete{color:#ff929a}
-.small-btn:hover{text-decoration:underline}
+.small-btn.edit{
+    background:#173d68;color:#9dccff;border-color:#2863a0
+}
+.small-btn.publish{
+    background:#124b35;color:#8af0bd;border-color:#237b53
+}
+.small-btn.unpublish{
+    background:#553714;color:#ffd18a;border-color:#986020
+}
+.small-btn.delete{
+    background:#541f2a;color:#ffadb5;border-color:#923b4b
+}
+.small-btn:hover{transform:translateY(-1px);filter:brightness(1.2)}
+.small-btn:focus-visible{outline:2px solid white;outline-offset:2px}
 .empty{
     padding:40px 20px;text-align:center;color:var(--muted)
 }
@@ -378,10 +392,10 @@ tbody tr:hover{background:#ffffff06}
                                 <td>{{ mix.downloads }}</td>
                                 <td>
                                     <div class="manage">
-                                        <a href="{{ url_for('dj_edit_mix', mix_id=mix.id) }}">Edit</a>
+                                        <a class="small-btn edit" href="{{ url_for('dj_edit_mix', mix_id=mix.id) }}">Edit</a>
                                         <form class="inline-form" method="POST" action="{{ url_for('dj_toggle_mix', mix_id=mix.id) }}">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <button class="small-btn" type="submit">{{ 'Unpublish' if mix.is_published else 'Publish' }}</button>
+                                            <button class="small-btn {{ 'unpublish' if mix.is_published else 'publish' }}" type="submit">{{ 'Unpublish' if mix.is_published else 'Publish' }}</button>
                                         </form>
                                         <form class="inline-form" method="POST" action="{{ url_for('dj_delete_mix', mix_id=mix.id) }}" onsubmit="return confirm('Permanently delete this mix?')">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
