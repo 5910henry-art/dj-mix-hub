@@ -70,6 +70,96 @@
         }
         .public-listener-card h3 { margin:0 0 5px; }
         .public-listener-card p { color:#aaa; margin:6px 0 0; }
+
+        /* Professional homepage footer */
+        .main-footer {
+            margin-top: 65px;
+            background: linear-gradient(145deg, #191923, #101018 75%);
+            border-top: 1px solid #343444;
+            color: #aaaab8;
+        }
+        .footer-inner {
+            max-width: 1200px;
+            margin: auto;
+            padding: 55px 25px 42px;
+            display: grid;
+            grid-template-columns: 1.6fr 1fr 1.3fr;
+            gap: 55px;
+        }
+        .footer-brand .brand {
+            display: inline-block;
+            color: #fff;
+            font-size: 25px;
+            font-weight: 900;
+            text-decoration: none;
+            letter-spacing: -.6px;
+        }
+        .footer-brand .brand span { color: #d9a441; }
+        .footer-tagline {
+            color: #d9a441;
+            font-weight: 800;
+            margin: 15px 0 9px;
+        }
+        .footer-description {
+            max-width: 350px;
+            color: #9999a8;
+            font-size: 13px;
+            line-height: 1.8;
+            margin: 0;
+        }
+        .footer-column {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 13px;
+        }
+        .footer-column h3 {
+            color: #fff;
+            font-size: 15px;
+            margin: 3px 0 7px;
+        }
+        .footer-column a {
+            color: #a6a6b4;
+            font-size: 13px;
+            text-decoration: none;
+            transition: color .2s;
+            overflow-wrap: anywhere;
+        }
+        .footer-column a:hover { color: #d9a441; }
+        .footer-bottom {
+            max-width: 1200px;
+            margin: auto;
+            padding: 19px 25px;
+            border-top: 1px solid #30303c;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: #858592;
+        }
+        .footer-bottom p { margin: 0; }
+        .footer-bottom span { color: #d9a441; }
+
+        @media (max-width: 700px) {
+            .footer-inner {
+                grid-template-columns: 1fr 1fr;
+                gap: 35px 22px;
+                padding: 40px 20px 30px;
+            }
+            .footer-brand { grid-column: 1 / -1; }
+            .footer-bottom {
+                padding: 18px 20px;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+        @media (max-width: 380px) {
+            .footer-inner { grid-template-columns: 1fr; }
+            .footer-brand { grid-column: auto; }
+        }
+
     </style>
 
 </head>
@@ -344,16 +434,40 @@
     {% include "partials/latest_mixes.html" %}
 </main>
 
-<footer>
-    <a href="/" class="brand">🎧 DJ MIX <span>HUB</span></a>
-    <p>Listen. Discover. Download.</p>
-    <nav class="footer-links" aria-label="Legal and support links">
-        <a href="{{ url_for('contact_page') }}">Contact</a>
-        <a href="{{ url_for('privacy_page') }}">Privacy Policy</a>
-        <a href="{{ url_for('terms_page') }}">Terms of Service</a>
-        <a href="{{ url_for('copyright_page') }}">Copyright &amp; Takedown</a>
-    </nav>
-    <small>© 2026 DJ MIX HUB. All rights reserved.</small>
+<footer class="main-footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <a href="/" class="brand">🎧 DJ MIX <span>HUB</span></a>
+            <p class="footer-tagline">Your sound. Your vibe. Your music community.</p>
+            <p class="footer-description">
+                Discover talented DJs, explore fresh mixes and enjoy music
+                from a growing community of creators.
+            </p>
+        </div>
+
+        <div class="footer-column">
+            <h3>Explore</h3>
+            <a href="/">Home</a>
+            <a href="{{ url_for('public_dj_directory') }}">Discover DJs</a>
+            <a href="#genres">Browse Genres</a>
+            <a href="#latest">Latest Mixes</a>
+            <a href="#book-dj">Book a DJ</a>
+        </div>
+
+        <div class="footer-column">
+            <h3>Support &amp; Legal</h3>
+            <a href="{{ url_for('contact_page') }}">Contact Us</a>
+            <a href="{{ url_for('privacy_page') }}">Privacy Policy</a>
+            <a href="{{ url_for('terms_page') }}">Terms of Service</a>
+            <a href="{{ url_for('copyright_page') }}">Copyright &amp; Takedown</a>
+            <a href="mailto:djmixhub.support@gmail.com">djmixhub.support@gmail.com</a>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <p>© 2026 DJ MIX HUB. All rights reserved.</p>
+        <span>Made for music lovers and DJs.</span>
+    </div>
 </footer>
 
 <script>
