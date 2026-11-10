@@ -1563,3 +1563,22 @@ footer small {
 .youtube-dj-item:hover .youtube-dj-visit {
     background: #ff3328;
 }
+
+/* Force the YouTube channel action to look like a red button */
+.youtube-dj-grid .youtube-dj-item .youtube-dj-visit {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border-radius: 7px;
+    background-color: #e62117 !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    text-align: center;
+}
+
+.youtube-dj-grid .youtube-dj-item:hover .youtube-dj-visit {
+    background-color: #ff3328 !important;
+}
