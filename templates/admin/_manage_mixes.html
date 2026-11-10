@@ -1,0 +1,126 @@
+<section id="admin-mix-management" aria-live="polite">
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span>Total mixes</span>
+            <strong>{{ stats.total }}</strong>
+        </div>
+        <div class="stat-card">
+            <span>Published</span>
+            <strong>{{ stats.published }}</strong>
+        </div>
+        <div class="stat-card">
+            <span>Unpublished</span>
+            <strong>{{ stats.drafts }}</strong>
+        </div>
+    </div>
+
+    <form method="GET"
+          action="{{ url_for('admin_manage_mixes') }}"
+          class="filters admin-mix-tools">
+
+        <input type="search"
+               name="q"
+               placeholder="Search mix or DJ..."
+               value="{{ search }}">
+
+        <select name="status">
+            <option value="all" {% if status == 'all' %}selected{% endif %}>All mixes</option>
+            <option value="published" {% if status == 'published' %}selected{% endif %}>Published</option>
+            <option value="draft" {% if status == 'draft' %}selected{% endif %}>Unpublished</option>
+        </select>
+
+        <select name="dj_id">
+            <option value="">All DJs</option>
+            {% for dj in djs %}
+                <option value="{{ dj.id }}"
+                    {% if dj_id == dj.id %}selected{% endif %}>
+                    {{ dj.display_name or dj.username }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select name="sort">
+            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest first</option>
+            <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest first</option>
+            <option value="plays" {% if sort == 'plays' %}selected{% endif %}>Most played</option>
+            <option value="downloads" {% if sort == 'downloads' %}selected{% endif %}>Most downloaded</option>
+            <option value="title" {% if sort == 'title' %}selected{% endif %}>Title A–Z</option>
+        </select>
+
+        <button class="primary" type="submit">Apply filters</button>
+
+        <a class="btn mix-reset"
+           href="{{ url_for('admin_manage_mixes') }}">Reset</a>
+    </form>
+
+    <div class="results-heading">
+        <strong>{{ total_filtered }} mix(es) found</strong>
+        <span class="muted">Page {{ page }} of {{ total_pages }}</span>
+    </div>
+
+    {% for mix in mixes %}
+        <div class="mix">
+            <h3>{{ mix.title }}</h3>
+
+            <p class="muted">
+                DJ: {{ mix.dj.display_name or mix.dj.username }}
+                {% if mix.genre %} · Genre: {{ mix.genre.name }}{% endif %}
+            </p>
+
+            <p>{{ mix.description or 'No description provided.' }}</p>
+
+            <p class="muted">
+                Plays: {{ mix.plays }} · Downloads: {{ mix.downloads }}
+            </p>
+
+            <p>
+                {% if mix.is_published %}
+                    <span style="color:#55d6a0;">● Published</span>
+                {% else %}
+                    <span style="color:#ffbd69;">● Unpublished</span>
+                {% endif %}
+            </p>
+
+            <div class="actions">
+                <a class="btn primary"
+                   href="{{ url_for('admin_edit_mix', mix_id=mix.id) }}">Edit</a>
+
+                <form method="POST"
+                      action="{{ url_for('admin_toggle_mix', mix_id=mix.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="success" type="submit">
+                        {{ 'Unpublish' if mix.is_published else 'Publish' }}
+                    </button>
+                </form>
+
+                <form method="POST"
+                      action="{{ url_for('admin_delete_mix', mix_id=mix.id) }}"
+                      onsubmit="return confirm('Permanently delete this mix and its uploaded files?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="danger" type="submit">Delete</button>
+                </form>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <h3>No mixes found</h3>
+            <p class="muted">Try changing your search or filters.</p>
+        </div>
+    {% endfor %}
+
+    {% if total_pages > 1 %}
+        <nav class="mix-pagination" aria-label="Mix pages">
+            {% if page > 1 %}
+                <a href="{{ url_for('admin_manage_mixes', q=search, status=status, sort=sort, dj_id=dj_id, page=page-1) }}">← Previous</a>
+            {% endif %}
+
+            <span>Page {{ page }} / {{ total_pages }}</span>
+
+            {% if page < total_pages %}
+                <a href="{{ url_for('admin_manage_mixes', q=search, status=status, sort=sort, dj_id=dj_id, page=page+1) }}">Next →</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+
+</section>

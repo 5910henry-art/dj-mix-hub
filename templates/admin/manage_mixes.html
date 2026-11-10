@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Manage Mixes | DJ MIX HUB</title>
+
     <style>
         * { box-sizing: border-box; }
+
         body {
             margin: 0;
             padding: 20px;
@@ -13,16 +15,20 @@
             color: #fff;
             font-family: Arial, sans-serif;
         }
+
         .container { max-width: 1100px; margin: auto; }
         h1 { color: #c4a1ff; }
         a { color: #c4a1ff; text-decoration: none; }
+
         .top, .filters, .actions {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
             align-items: center;
         }
+
         .top { justify-content: space-between; }
+
         input, select, button, .btn {
             padding: 11px;
             border: 1px solid #49376b;
@@ -30,10 +36,12 @@
             background: #211a32;
             color: white;
         }
+
         button, .btn { cursor: pointer; }
         .primary { background: #7545c5; }
         .danger { background: #a52e4a; }
         .success { background: #236b51; }
+
         .mix {
             background: #1d172b;
             border: 1px solid #382b50;
@@ -41,17 +49,97 @@
             padding: 16px;
             margin: 14px 0;
         }
+
         .muted { color: #aaa; font-size: 13px; }
         .actions { margin-top: 14px; }
         form { margin: 0; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin: 22px 0;
+        }
+
+        .stat-card {
+            background: #1d172b;
+            border: 1px solid #49376b;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .stat-card span {
+            display: block;
+            color: #aaa;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card strong {
+            display: block;
+            color: #d9c2ff;
+            font-size: 25px;
+        }
+
+        .filters { margin: 18px 0; }
+        .filters input { flex: 1; min-width: 180px; }
+        .filters select { min-width: 130px; }
+
+        .results-heading {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 20px 0 10px;
+        }
+
+        .mix-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin: 24px 0;
+            padding: 16px;
+            background: #1d172b;
+            border: 1px solid #382b50;
+            border-radius: 10px;
+        }
+
+        .mix-pagination a {
+            padding: 9px 13px;
+            border-radius: 7px;
+            background: #35264f;
+        }
+
+        .empty-state {
+            padding: 30px 15px;
+            text-align: center;
+            background: #1d172b;
+            border: 1px solid #382b50;
+            border-radius: 12px;
+        }
+
+        #admin-mix-management[aria-busy="true"] {
+            opacity: .65;
+            pointer-events: none;
+        }
+
         @media(max-width: 600px) {
             body { padding: 12px; }
-            .filters input { width: 100%; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .filters { align-items: stretch; }
+            .filters input, .filters select, .filters button, .filters .btn {
+                width: 100%;
+            }
+            .actions { align-items: stretch; }
         }
     </style>
 </head>
+
 <body>
 <div class="container">
+
     <div class="top">
         <div>
             <h1>🎧 Manage Mixes</h1>
@@ -68,66 +156,88 @@
         {% endfor %}
     {% endwith %}
 
-    <form method="GET" class="filters">
-        <input type="search" name="q" placeholder="Search mix or DJ..."
-               value="{{ search }}">
-        <select name="status">
-            <option value="all" {% if status == 'all' %}selected{% endif %}>All mixes</option>
-            <option value="published" {% if status == 'published' %}selected{% endif %}>Published</option>
-            <option value="draft" {% if status == 'draft' %}selected{% endif %}>Unpublished</option>
-        </select>
-        <button class="primary" type="submit">Search</button>
-        <a class="btn" href="{{ url_for('admin_manage_mixes') }}">Reset</a>
-    </form>
+    {% include "admin/_manage_mixes.html" %}
 
-    <h3>{{ mixes|length }} mix(es) found</h3>
-
-    {% for mix in mixes %}
-        <div class="mix">
-            <h3>{{ mix.title }}</h3>
-
-            <p class="muted">
-                DJ: {{ mix.dj.display_name or mix.dj.username }}
-                {% if mix.genre %} · Genre: {{ mix.genre.name }}{% endif %}
-            </p>
-
-            <p>{{ mix.description or 'No description provided.' }}</p>
-
-            <p class="muted">
-                Plays: {{ mix.plays }} · Downloads: {{ mix.downloads }}
-            </p>
-
-            <p>
-                {% if mix.is_published %}
-                    <span style="color:#55d6a0;">● Published</span>
-                {% else %}
-                    <span style="color:#ffbd69;">● Unpublished</span>
-                {% endif %}
-            </p>
-
-            <div class="actions">
-                <a class="btn primary"
-                   href="{{ url_for('admin_edit_mix', mix_id=mix.id) }}">Edit</a>
-
-                <form method="POST"
-                      action="{{ url_for('admin_toggle_mix', mix_id=mix.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button class="success" type="submit">
-                        {{ 'Unpublish' if mix.is_published else 'Publish' }}
-                    </button>
-                </form>
-
-                <form method="POST"
-                      action="{{ url_for('admin_delete_mix', mix_id=mix.id) }}"
-                      onsubmit="return confirm('Permanently delete this mix and its uploaded files?');">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button class="danger" type="submit">Delete</button>
-                </form>
-            </div>
-        </div>
-    {% else %}
-        <p>No mixes found. Upload your first mix to get started.</p>
-    {% endfor %}
 </div>
+
+<script>
+(() => {
+    const dashboardUrl = {{ url_for("admin_manage_mixes") | tojson }};
+
+    async function refreshMixManagement(url, updateHistory = true) {
+        const current = document.getElementById("admin-mix-management");
+        if (!current) return;
+
+        current.setAttribute("aria-busy", "true");
+
+        try {
+            const response = await fetch(url, {
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+                credentials: "same-origin"
+            });
+
+            if (!response.ok) {
+                throw new Error("Could not load mixes.");
+            }
+
+            const html = await response.text();
+            const parsed = new DOMParser().parseFromString(html, "text/html");
+            const replacement = parsed.getElementById("admin-mix-management");
+
+            if (!replacement) {
+                throw new Error("Mix management section was not returned.");
+            }
+
+            current.replaceWith(replacement);
+
+            if (updateHistory) {
+                history.pushState({}, "", url);
+            }
+        } catch (error) {
+            window.location.href = url;
+        }
+    }
+
+    document.addEventListener("submit", event => {
+        const form = event.target.closest("form.admin-mix-tools");
+        if (!form) return;
+
+        event.preventDefault();
+
+        const url = new URL(form.action || dashboardUrl, window.location.origin);
+        const data = new FormData(form);
+
+        url.search = "";
+
+        for (const [key, value] of data.entries()) {
+            if (value !== "") url.searchParams.set(key, value);
+        }
+
+        refreshMixManagement(url.toString());
+    });
+
+    document.addEventListener("click", event => {
+        const link = event.target.closest(
+            "#admin-mix-management .mix-pagination a, #admin-mix-management .mix-reset"
+        );
+
+        if (!link) return;
+        if (event.button !== 0 || event.ctrlKey || event.metaKey ||
+            event.shiftKey || event.altKey) return;
+
+        const url = new URL(link.href, window.location.origin);
+
+        if (url.origin !== window.location.origin) return;
+
+        event.preventDefault();
+        refreshMixManagement(url.toString());
+    });
+
+    window.addEventListener("popstate", () => {
+        refreshMixManagement(window.location.href, false);
+    });
+})();
+</script>
+
 </body>
 </html>

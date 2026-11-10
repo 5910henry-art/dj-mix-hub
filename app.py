@@ -3174,8 +3174,37 @@ def create_app():
     def admin_manage_mixes():
         from models import Mix, DJ, Genre
 
-        search = request.args.get("q", "").strip()
+        search = (request.args.get("q") or "").strip()[:180]
         status = request.args.get("status", "all")
+        sort = request.args.get("sort", "newest")
+        dj_id = request.args.get("dj_id", type=int)
+
+        if status not in {"all", "published", "draft"}:
+            status = "all"
+
+        sort_options = {
+            "newest": Mix.created_at.desc(),
+            "oldest": Mix.created_at.asc(),
+            "plays": Mix.plays.desc(),
+            "downloads": Mix.downloads.desc(),
+            "title": Mix.title.asc()
+        }
+
+        if sort not in sort_options:
+            sort = "newest"
+
+        page = max(request.args.get("page", 1, type=int) or 1, 1)
+        per_page = 15
+
+        stats = {
+            "total": Mix.query.count(),
+            "published": Mix.query.filter(
+                Mix.is_published.is_(True)
+            ).count(),
+            "drafts": Mix.query.filter(
+                Mix.is_published.is_(False)
+            ).count()
+        }
 
         query = Mix.query.join(Mix.dj)
 
@@ -3193,15 +3222,42 @@ def create_app():
         elif status == "draft":
             query = query.filter(Mix.is_published.is_(False))
 
-        mixes = query.order_by(Mix.created_at.desc()).all()
+        if dj_id:
+            query = query.filter(Mix.dj_id == dj_id)
+
+        total_filtered = query.count()
+        total_pages = max(
+            (total_filtered + per_page - 1) // per_page, 1
+        )
+        page = min(page, total_pages)
+
+        mixes = query.order_by(
+            sort_options[sort], Mix.id.desc()
+        ).offset((page - 1) * per_page).limit(per_page).all()
+
+        djs = DJ.query.order_by(DJ.username.asc()).all()
         genres = Genre.query.order_by(Genre.name).all()
 
+        template_name = (
+            "admin/_manage_mixes.html"
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            else "admin/manage_mixes.html"
+        )
+
         return render_template(
-            "admin/manage_mixes.html",
+            template_name,
             mixes=mixes,
             genres=genres,
+            djs=djs,
+            stats=stats,
             search=search,
-            status=status
+            status=status,
+            sort=sort,
+            dj_id=dj_id,
+            page=page,
+            per_page=per_page,
+            total_filtered=total_filtered,
+            total_pages=total_pages
         )
 
     @app.route("/admin/mixes/<int:mix_id>/edit", methods=["GET", "POST"])
