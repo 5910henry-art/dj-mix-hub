@@ -1,4 +1,7 @@
 import os
+import threading
+import time
+from zoneinfo import ZoneInfo
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from uuid import uuid4
@@ -78,6 +81,53 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
+
+    # Automatically remove expired, cancelled and completed bookings.
+    # Each worker checks at most once every five minutes.
+    booking_cleanup_lock = threading.Lock()
+    booking_cleanup_state = {"last_check": None}
+
+    @app.before_request
+    def automatic_booking_cleanup():
+        now = time.monotonic()
+        last_check = booking_cleanup_state["last_check"]
+
+        if last_check is not None and now - last_check < 300:
+            return
+
+        if not booking_cleanup_lock.acquire(blocking=False):
+            return
+
+        try:
+            booking_cleanup_state["last_check"] = now
+
+            from models import Booking
+
+            kenya_today = datetime.now(
+                ZoneInfo("Africa/Nairobi")
+            ).date()
+
+            deleted_count = Booking.query.filter(
+                or_(
+                    Booking.event_date < kenya_today,
+                    Booking.status.in_(["cancelled", "completed"])
+                )
+            ).delete(synchronize_session=False)
+
+            db.session.commit()
+
+            if deleted_count:
+                app.logger.info(
+                    "Automatic booking cleanup removed %s bookings.",
+                    deleted_count
+                )
+
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Automatic booking cleanup failed.")
+
+        finally:
+            booking_cleanup_lock.release()
 
     # Load the private VAPID key from the protected local file
     # when it has not been supplied through the environment.
@@ -3601,10 +3651,14 @@ def create_app():
 
         if new_status not in allowed_statuses:
             flash("Invalid booking status.")
-        elif new_status == "completed":
+        elif new_status in {"completed", "cancelled"}:
             db.session.delete(booking)
             db.session.commit()
-            flash("Booking completed and permanently removed.")
+
+            if new_status == "completed":
+                flash("Booking completed and permanently removed.")
+            else:
+                flash("Cancelled booking permanently removed.")
         else:
             booking.status = new_status
             db.session.commit()
@@ -3727,10 +3781,14 @@ def create_app():
 
         if new_status not in allowed_statuses:
             flash("Invalid booking status.")
-        elif new_status == "completed":
+        elif new_status in {"completed", "cancelled"}:
             db.session.delete(booking)
             db.session.commit()
-            flash("Booking completed and permanently removed.")
+
+            if new_status == "completed":
+                flash("Booking completed and permanently removed.")
+            else:
+                flash("Cancelled booking permanently removed.")
         else:
             booking.status = new_status
             db.session.commit()
