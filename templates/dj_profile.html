@@ -185,6 +185,18 @@ h1{
 }
 .mix-actions a:hover{background:#523879}
 .mix-actions .listen{background:var(--purple2);color:white}
+.load-more-wrap{
+    display:flex;justify-content:center;margin:28px 0 8px;
+}
+.load-more-btn{
+    border:1px solid #7955ae;border-radius:10px;
+    padding:12px 25px;background:#30254b;color:#fff;
+    font-size:13px;font-weight:800;cursor:pointer;
+    transition:background .2s,transform .2s;
+}
+.load-more-btn:hover{background:#523879;transform:translateY(-2px)}
+.load-more-btn:disabled{opacity:.6;cursor:default;transform:none}
+
 .empty{
     grid-column:1/-1;text-align:center;
     padding:45px 20px;background:var(--panel);
@@ -242,7 +254,6 @@ footer span{color:#c4a4ff;font-weight:800}
         <a class="brand" href="/">🎧 DJ MIX <span>HUB</span></a>
         <div class="nav-links">
             <a href="{{ url_for('public_dj_directory') }}">← All DJs</a>
-            <a class="nav-book" href="{{ url_for('public_booking', dj_id=dj.id) }}">Book this DJ</a>
         </div>
     </nav>
 </header>
@@ -342,11 +353,54 @@ footer span{color:#c4a4ff;font-weight:800}
             </div>
             {% endfor %}
         </div>
+
+        <div class="load-more-wrap">
+            <button class="load-more-btn" id="loadMoreMixes" type="button" hidden>
+                Load More Mixes
+            </button>
+        </div>
     </section>
 </main>
 
 <footer>
     Powered by <span>DJ MIX HUB</span> · Discover music. Discover DJs.
 </footer>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const cards = Array.from(document.querySelectorAll(".mix-card"));
+    const button = document.getElementById("loadMoreMixes");
+    const batchSize = 12;
+    let visibleCount = 0;
+
+    function showNextBatch() {
+        const nextCount = Math.min(visibleCount + batchSize, cards.length);
+
+        cards.slice(visibleCount, nextCount).forEach(function (card) {
+            card.hidden = false;
+        });
+
+        visibleCount = nextCount;
+
+        const remaining = cards.length - visibleCount;
+        if (remaining > 0) {
+            button.textContent = "Load More Mixes (" + remaining + " remaining)";
+        } else {
+            button.hidden = true;
+        }
+    }
+
+    // Keep all mixes visible if JavaScript is unavailable.
+    cards.forEach(function (card) {
+        card.hidden = true;
+    });
+
+    if (cards.length > 0) {
+        button.hidden = false;
+        showNextBatch();
+        button.addEventListener("click", showNextBatch);
+    }
+});
+</script>
 </body>
 </html>
