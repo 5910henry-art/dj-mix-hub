@@ -2011,27 +2011,84 @@ def create_app():
     def dj_dashboard():
         from models import Mix, Booking
 
-        mixes = Mix.query.filter_by(
-            dj_id=current_user.id
-        ).order_by(Mix.created_at.desc()).all()
+        search = (request.args.get("q") or "").strip()[:180]
+        status = request.args.get("status", "all")
+        sort = request.args.get("sort", "newest")
 
-        booking_query = Booking.query.filter_by(dj_id=current_user.id)
+        if status not in {"all", "published", "draft"}:
+            status = "all"
+
+        page = max(request.args.get("page", 1, type=int) or 1, 1)
+        per_page = 10
+
+        owned = Mix.query.filter_by(dj_id=current_user.id)
 
         stats = {
-            "total": len(mixes),
-            "published": sum(1 for mix in mixes if mix.is_published),
-            "plays": sum(mix.plays for mix in mixes),
-            "downloads": sum(mix.downloads for mix in mixes),
+            "total": owned.count(),
+            "published": owned.filter_by(is_published=True).count(),
+            "drafts": owned.filter_by(is_published=False).count(),
+            "plays": db.session.query(
+                db.func.coalesce(db.func.sum(Mix.plays), 0)
+            ).filter_by(dj_id=current_user.id).scalar(),
+            "downloads": db.session.query(
+                db.func.coalesce(db.func.sum(Mix.downloads), 0)
+            ).filter_by(dj_id=current_user.id).scalar()
+        }
+
+        booking_query = Booking.query.filter_by(dj_id=current_user.id)
+        stats.update({
             "bookings": booking_query.count(),
             "pending_bookings": booking_query.filter_by(status="pending").count(),
             "confirmed_bookings": booking_query.filter_by(status="confirmed").count()
+        })
+
+        query = owned
+
+        if search:
+            query = query.filter(Mix.title.ilike(f"%{search}%"))
+
+        if status == "published":
+            query = query.filter_by(is_published=True)
+        elif status == "draft":
+            query = query.filter_by(is_published=False)
+
+        sort_options = {
+            "newest": Mix.created_at.desc(),
+            "oldest": Mix.created_at.asc(),
+            "plays": Mix.plays.desc(),
+            "downloads": Mix.downloads.desc(),
+            "title": Mix.title.asc()
         }
+        if sort not in sort_options:
+            sort = "newest"
+
+        total_filtered = query.count()
+        total_pages = max(
+            (total_filtered + per_page - 1) // per_page,
+            1
+        )
+        page = min(page, total_pages)
+
+        mixes = query.order_by(
+            sort_options[sort], Mix.id.desc()
+        ).offset(
+            (page - 1) * per_page
+        ).limit(per_page).all()
+
+        booking_query = Booking.query.filter_by(dj_id=current_user.id)
 
         return render_template(
             "dj/dashboard.html",
             dj=current_user,
             mixes=mixes,
-            stats=stats
+            stats=stats,
+            search=search,
+            status=status,
+            sort=sort,
+            page=page,
+            per_page=per_page,
+            total_filtered=total_filtered,
+            total_pages=total_pages
         )
 
 
@@ -2133,7 +2190,7 @@ def create_app():
                     cover_image=cover_filename,
                     dj_id=current_user.id,
                     genre_id=genre_id,
-                    is_published=False
+                    is_published=True
                 )
 
                 db.session.add(mix)
@@ -2163,7 +2220,14 @@ def create_app():
                 db.session.add(declaration)
                 db.session.commit()
 
-                flash("Mix uploaded successfully and submitted for review.")
+                try:
+                    send_mix_published_notification(mix)
+                except Exception:
+                    app.logger.exception(
+                        "Push notification failed after DJ mix upload."
+                    )
+
+                flash("Mix uploaded and published successfully.")
                 return redirect(url_for("dj_dashboard"))
 
             except Exception:

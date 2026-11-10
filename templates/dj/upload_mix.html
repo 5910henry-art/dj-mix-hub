@@ -54,7 +54,7 @@ a{color:#c4a4ff;text-decoration:none}.message{color:#ffaaaa}
 </head>
 <body><div class="container">
 <h1>🎧 Upload Your Mix</h1>
-<p>Upload your mix, then publish or unpublish it whenever you choose from your dashboard.</p>
+<p>Your mix will be published as soon as the upload is complete. You can unpublish it or manage it anytime from your dashboard.</p>
 {% with messages=get_flashed_messages() %}{% for message in messages %}<p class="message">{{ message }}</p>{% endfor %}{% endwith %}
 <form method="POST" enctype="multipart/form-data" data-upload-progress>
 
