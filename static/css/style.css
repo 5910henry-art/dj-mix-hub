@@ -1537,3 +1537,29 @@ footer small {
         max-width: none;
     }
 }
+
+/* Make YouTube channel action clearly visible on DJ cards */
+.youtube-dj-item {
+    cursor: pointer;
+}
+
+.youtube-dj-visit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 5px;
+    padding: 9px 10px;
+    border-radius: 7px;
+    background: #e62117;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    transition: background .2s ease;
+}
+
+.youtube-dj-item:hover .youtube-dj-visit {
+    background: #ff3328;
+}

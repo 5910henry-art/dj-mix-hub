@@ -289,7 +289,8 @@
                             target="_blank"
                             rel="noopener noreferrer"
                             data-name="{{ youtube_dj.display_name or youtube_dj.username }}"
-                            {% if loop.index > 8 %}hidden{% endif %}
+                            data-admin="{{ 'true' if youtube_dj.is_admin else 'false' }}"
+                            {% if not youtube_dj.is_admin %}hidden{% endif %}
                         >
                             <span class="youtube-dj-play">▶</span>
                             <span class="youtube-dj-name">
@@ -303,17 +304,6 @@
                     <p id="youtubeDjNoResults" class="youtube-dj-empty" hidden>
                         No DJs found with that name.
                     </p>
-
-                    {% if youtube_djs|length > 8 %}
-                    <button
-                        type="button"
-                        class="youtube-dj-more"
-                        id="youtubeDjMore"
-                        aria-expanded="false"
-                    >
-                        Show more DJs
-                    </button>
-                    {% endif %}
                 </div>
                 {% else %}
                 <p>No DJs have added their YouTube channels yet.</p>
@@ -334,19 +324,21 @@
         const cards = Array.from(
             grid.querySelectorAll(".youtube-dj-item")
         );
-        const moreButton = document.getElementById("youtubeDjMore");
         const noResults = document.getElementById("youtubeDjNoResults");
-
-        let expanded = false;
 
         function updateDjs() {
             const query = search.value.trim().toLowerCase();
             let visible = 0;
 
-            cards.forEach((card, index) => {
+            cards.forEach((card) => {
                 const name = (card.dataset.name || "").toLowerCase();
-                const matches = name.includes(query);
-                const shouldShow = matches && (query || expanded || index < 8);
+                const isAdmin = card.dataset.admin === "true";
+
+                // Show all matching DJs during search.
+                // Without a search, show admins only.
+                const shouldShow = query
+                    ? name.includes(query)
+                    : isAdmin;
 
                 card.hidden = !shouldShow;
 
@@ -354,27 +346,15 @@
             });
 
             if (noResults) {
-                noResults.hidden = visible !== 0;
-            }
+                noResults.textContent = query
+                    ? "No DJs found with that name."
+                    : "No admin YouTube channels are available yet.";
 
-            if (moreButton) {
-                moreButton.hidden = Boolean(query);
-                moreButton.textContent = expanded
-                    ? "Show less"
-                    : "Show more DJs";
-                moreButton.setAttribute("aria-expanded", String(expanded));
+                noResults.hidden = visible !== 0;
             }
         }
 
         search.addEventListener("input", updateDjs);
-
-        if (moreButton) {
-            moreButton.addEventListener("click", function () {
-                expanded = !expanded;
-                updateDjs();
-            });
-        }
-
         updateDjs();
     })();
     </script>
