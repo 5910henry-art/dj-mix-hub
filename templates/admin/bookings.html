@@ -136,7 +136,6 @@
                         <th>Message</th>
                         <th>Assigned DJ</th>
                         <th>Status</th>
-                        <th>Update</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -241,16 +240,15 @@
                             <span class="{{ booking.status }}">
                                 {{ booking.status|title }}
                             </span>
-                        </td>
 
-                        <td>
+                            {% if booking.dj_id == current_user.id %}
                             <form method="POST"
                                   action="{{ url_for('admin_update_booking_status', booking_id=booking.id) }}">
                                 <input type="hidden"
                                        name="csrf_token"
                                        value="{{ csrf_token() }}">
 
-                                <select name="status">
+                                <select name="status" required>
                                     {% for item in ['pending', 'confirmed', 'completed', 'cancelled'] %}
                                     <option value="{{ item }}"
                                         {% if booking.status == item %}selected{% endif %}>
@@ -261,11 +259,13 @@
 
                                 <button type="submit">Save</button>
                             </form>
+                            {% endif %}
                         </td>
+
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="9" class="empty">
+                        <td colspan="8" class="empty">
                             No booking requests found.
                         </td>
                     </tr>

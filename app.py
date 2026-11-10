@@ -3638,10 +3638,10 @@ def create_app():
     def admin_update_booking_status(booking_id):
         from models import Booking
 
-        booking = db.session.get(Booking, booking_id)
-
-        if not booking:
-            abort(404)
+        booking = Booking.query.filter_by(
+            id=booking_id,
+            dj_id=current_user.id
+        ).first_or_404()
 
         new_status = request.form.get("status", "").strip().lower()
 
