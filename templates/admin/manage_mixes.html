@@ -43,11 +43,60 @@
         .success { background: #236b51; }
 
         .mix {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
             background: #1d172b;
             border: 1px solid #382b50;
-            border-radius: 12px;
-            padding: 16px;
-            margin: 14px 0;
+            border-radius: 9px;
+            padding: 10px 13px;
+            margin: 7px 0;
+        }
+
+        .mix h3 {
+            flex: 1 1 150px;
+            min-width: 0;
+            margin: 0;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        .mix p {
+            margin: 0;
+            font-size: 12px;
+        }
+
+        .mix .muted {
+            font-size: 11px;
+        }
+
+        .mix .actions {
+            margin: 0 0 0 auto;
+            gap: 6px;
+        }
+
+        .mix .actions .btn,
+        .mix .actions button {
+            padding: 7px 9px;
+            font-size: 11px;
+            border-radius: 6px;
+        }
+
+        .mix .actions form {
+            display: inline-flex;
+        }
+
+        .mix > p:nth-of-type(2) {
+            display: none;
+        }
+
+        .mix > p:nth-of-type(3) {
+            white-space: nowrap;
+        }
+
+        .mix > p:nth-of-type(4) {
+            white-space: nowrap;
         }
 
         .muted { color: #aaa; font-size: 13px; }
@@ -132,7 +181,12 @@
             .filters input, .filters select, .filters button, .filters .btn {
                 width: 100%;
             }
-            .actions { align-items: stretch; }
+            .mix { gap: 8px; padding: 10px; }
+            .mix h3 { flex-basis: 100%; }
+            .mix .actions { margin-left: 0; }
+            .mix > p:nth-of-type(3),
+            .mix > p:nth-of-type(4) { white-space: normal; }
+            .mix .actions { flex-wrap: wrap; }
         }
     </style>
 </head>
