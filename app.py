@@ -3542,31 +3542,39 @@ def create_app():
         if not booking:
             abort(404)
 
+        assigned_dj = booking.dj
+
+        # Only unassigned bookings or bookings assigned to an admin
+        # can be assigned to another DJ.
+        if assigned_dj and not assigned_dj.is_admin:
+            flash("This booking is already assigned to a DJ and cannot be reassigned.")
+            return redirect(url_for("admin_manage_bookings"))
+
         dj_value = request.form.get("dj_id", "").strip()
 
         if not dj_value:
-            booking.dj_id = None
-        else:
-            try:
-                dj_id = int(dj_value)
-            except ValueError:
-                flash("Invalid DJ selection.")
-                return redirect(url_for("admin_manage_bookings"))
+            flash("Please select a DJ.")
+            return redirect(url_for("admin_manage_bookings"))
 
-            dj = DJ.query.filter(
-                DJ.id == dj_id,
-                or_(
-                    DJ.is_admin.is_(True),
-                    DJ.is_approved.is_(True)
-                )
-            ).first()
+        try:
+            dj_id = int(dj_value)
+        except ValueError:
+            flash("Invalid DJ selection.")
+            return redirect(url_for("admin_manage_bookings"))
 
-            if not dj:
-                flash("That DJ is unavailable or suspended.")
-                return redirect(url_for("admin_manage_bookings"))
+        dj = DJ.query.filter(
+            DJ.id == dj_id,
+            or_(
+                DJ.is_admin.is_(True),
+                DJ.is_approved.is_(True)
+            )
+        ).first()
 
-            booking.dj_id = dj.id
+        if not dj:
+            flash("That DJ is unavailable or suspended.")
+            return redirect(url_for("admin_manage_bookings"))
 
+        booking.dj_id = dj.id
         db.session.commit()
         flash("Booking assignment updated successfully.")
         return redirect(url_for("admin_manage_bookings"))
@@ -3593,6 +3601,10 @@ def create_app():
 
         if new_status not in allowed_statuses:
             flash("Invalid booking status.")
+        elif new_status == "completed":
+            db.session.delete(booking)
+            db.session.commit()
+            flash("Booking completed and permanently removed.")
         else:
             booking.status = new_status
             db.session.commit()
@@ -3715,6 +3727,10 @@ def create_app():
 
         if new_status not in allowed_statuses:
             flash("Invalid booking status.")
+        elif new_status == "completed":
+            db.session.delete(booking)
+            db.session.commit()
+            flash("Booking completed and permanently removed.")
         else:
             booking.status = new_status
             db.session.commit()

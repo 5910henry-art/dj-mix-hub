@@ -211,12 +211,16 @@
                             <strong>
                                 {{ (booking.dj.display_name or booking.dj.username) if booking.dj else 'Unassigned' }}
                             </strong>
+                            {% if not booking.dj or booking.dj.is_admin %}
                             <form method="POST"
                                   action="{{ url_for('admin_assign_booking', booking_id=booking.id) }}">
                                 <input type="hidden" name="csrf_token"
                                        value="{{ csrf_token() }}">
-                                <select name="dj_id">
-                                    <option value="">Unassigned</option>
+                                <select name="dj_id" required>
+                                    <option value="" disabled
+                                        {% if not booking.dj_id %}selected{% endif %}>
+                                        Select DJ
+                                    </option>
                                     {% for dj in djs %}
                                     <option value="{{ dj.id }}"
                                         {% if booking.dj_id == dj.id %}selected{% endif %}>
@@ -226,6 +230,11 @@
                                 </select>
                                 <button type="submit">Assign</button>
                             </form>
+                            {% else %}
+                                <small style="color:#aaa6bd;">
+                                    Assigned to DJ — reassignment locked
+                                </small>
+                            {% endif %}
                         </td>
 
                         <td>
