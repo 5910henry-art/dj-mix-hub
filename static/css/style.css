@@ -1137,3 +1137,85 @@ footer small {
         grid-template-columns: 90px minmax(0, 1fr);
     }
 }
+
+
+/* Extra compact homepage mix cards - v2 */
+#latest .mix-card {
+    flex: 0 0 260px;
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    border-radius: 9px;
+    min-width: 0;
+}
+
+#latest .cover-art {
+    height: 100%;
+    min-height: 0;
+}
+
+#latest .cover-placeholder span {
+    font-size: 32px;
+}
+
+#latest .cover-placeholder small {
+    font-size: 7px;
+    letter-spacing: 1px;
+}
+
+#latest .mix-info {
+    padding: 8px;
+    min-width: 0;
+}
+
+#latest .mix-info h3 {
+    font-size: 12px;
+    line-height: 1.2;
+    margin-bottom: 3px;
+    -webkit-line-clamp: 2;
+}
+
+#latest .dj-name {
+    font-size: 10px;
+    line-height: 1.2;
+}
+
+#latest .genre-tag {
+    margin-top: 4px;
+    padding: 2px 6px;
+    font-size: 9px;
+}
+
+#latest .mix-stats {
+    gap: 3px 7px;
+    margin: 5px 0;
+    font-size: 9px;
+}
+
+#latest .mix-info audio {
+    height: 28px;
+    margin: 2px 0 4px;
+}
+
+#latest .download-button {
+    padding: 5px 7px;
+    font-size: 10px;
+    border-radius: 5px;
+}
+
+@media (max-width: 700px) {
+    #latest .mix-card {
+        flex: 0 0 270px;
+        grid-template-columns: 78px minmax(0, 1fr);
+    }
+
+    #latest .mix-info {
+        padding: 7px;
+    }
+}
+
+@media (max-width: 320px) {
+    #latest .mix-card {
+        flex-basis: 250px;
+        grid-template-columns: 72px minmax(0, 1fr);
+    }
+}
