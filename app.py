@@ -2077,8 +2077,14 @@ def create_app():
 
         booking_query = Booking.query.filter_by(dj_id=current_user.id)
 
+        template_name = (
+            "dj/_mix_management.html"
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            else "dj/dashboard.html"
+        )
+
         return render_template(
-            "dj/dashboard.html",
+            template_name,
             dj=current_user,
             mixes=mixes,
             stats=stats,

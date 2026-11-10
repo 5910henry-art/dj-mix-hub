@@ -1,0 +1,103 @@
+<section class="mix-panel" id="mix-management">
+                <form class="mix-tools" method="GET"
+                      action="{{ url_for('dj_dashboard') }}">
+                    <input type="search" name="q"
+                           value="{{ search }}"
+                           placeholder="Search mix titles..."
+                           aria-label="Search mix titles">
+
+                    <select name="status" aria-label="Filter by publication status">
+                        <option value="all" {% if status == 'all' %}selected{% endif %}>All mixes</option>
+                        <option value="published" {% if status == 'published' %}selected{% endif %}>Published</option>
+                        <option value="draft" {% if status == 'draft' %}selected{% endif %}>Drafts</option>
+                    </select>
+
+                    <select name="sort" aria-label="Sort mixes">
+                        <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest first</option>
+                        <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest first</option>
+                        <option value="plays" {% if sort == 'plays' %}selected{% endif %}>Most played</option>
+                        <option value="downloads" {% if sort == 'downloads' %}selected{% endif %}>Most downloaded</option>
+                        <option value="title" {% if sort == 'title' %}selected{% endif %}>Title A–Z</option>
+                    </select>
+
+                    <button type="submit">Apply</button>
+                </form>
+
+                {% if total_filtered %}
+                <div class="mix-summary">
+                    Showing {{ (page - 1) * per_page + 1 }}–{{ [page * per_page, total_filtered] | min }}
+                    of {{ total_filtered }} matching mix{% if total_filtered != 1 %}es{% endif %}
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mix Details</th>
+                                <th>Genre</th>
+                                <th>Status</th>
+                                <th>Plays</th>
+                                <th>Downloads</th>
+                                <th>Manage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for mix in mixes %}
+                            <tr>
+                                <td><span class="mix-title">{{ mix.title }}</span></td>
+                                <td class="genre">{{ mix.genre.name if mix.genre else '—' }}</td>
+                                <td>
+                                    {% if mix.is_published %}
+                                    <span class="status published">Published</span>
+                                    {% else %}
+                                    <span class="status draft">Draft</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ mix.plays }}</td>
+                                <td>{{ mix.downloads }}</td>
+                                <td>
+                                    <div class="manage">
+                                        <a class="small-btn edit" href="{{ url_for('dj_edit_mix', mix_id=mix.id) }}">Edit</a>
+                                        <form class="inline-form" method="POST" action="{{ url_for('dj_toggle_mix', mix_id=mix.id) }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button class="small-btn {{ 'unpublish' if mix.is_published else 'publish' }}" type="submit">{{ 'Unpublish' if mix.is_published else 'Publish' }}</button>
+                                        </form>
+                                        <form class="inline-form" method="POST" action="{{ url_for('dj_delete_mix', mix_id=mix.id) }}" onsubmit="return confirm('Permanently delete this mix?')">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button class="small-btn delete" type="submit">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if total_pages > 1 %}
+                <nav class="mix-pagination" aria-label="Mix pages">
+                    {% if page > 1 %}
+                    <a href="{{ url_for('dj_dashboard', q=search, status=status, sort=sort, page=page-1) }}">← Previous</a>
+                    {% endif %}
+                    <span>Page {{ page }} of {{ total_pages }}</span>
+                    {% if page < total_pages %}
+                    <a href="{{ url_for('dj_dashboard', q=search, status=status, sort=sort, page=page+1) }}">Next →</a>
+                    {% endif %}
+                </nav>
+                {% endif %}
+
+                {% else %}
+                <div class="empty">
+                    <div class="empty-icon">🎵</div>
+                    {% if search or status != 'all' %}
+                    <strong>No matching mixes</strong>
+                    <span>Try changing your search or filters.</span><br>
+                    <a href="{{ url_for('dj_dashboard') }}">Clear Filters</a>
+                    {% else %}
+                    <strong>Your DJ journey starts here</strong>
+                    <span>You haven't uploaded any mixes yet.</span><br>
+                    <a href="{{ url_for('dj_upload_mix') }}">＋ Upload Your First Mix</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </section>
