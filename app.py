@@ -1722,12 +1722,20 @@ def create_app():
 
     @app.route("/mix/<int:mix_id>/download")
     def download_mix(mix_id):
-        from models import Mix, MixEvent
+        from models import Mix, MixEvent, MixRightsDeclaration
         from audio_storage import filebase_enabled, stream_audio
 
         mix = Mix.query.filter_by(
             id=mix_id, is_published=True
         ).first_or_404()
+
+        permission = MixRightsDeclaration.query.filter_by(
+            mix_id=mix.id,
+            allow_downloads=True
+        ).first()
+
+        if not permission:
+            abort(403)
 
         mix.downloads += 1
         db.session.add(MixEvent(
@@ -2041,6 +2049,7 @@ def create_app():
             cover = request.files.get("cover_image")
             genre_value = request.form.get("genre_id", "").strip()
             rights_confirmation = request.form.get("rights_confirmation")
+            allow_downloads = request.form.get("allow_downloads") == "yes"
 
             if rights_confirmation != "yes":
                 flash(
@@ -2134,7 +2143,8 @@ def create_app():
                     mix_id=mix.id,
                     dj_id=current_user.id,
                     confirmed_at=datetime.utcnow(),
-                    declaration_version="2026-11-09-v1",
+                    declaration_version="2026-11-10-v1",
+                    allow_downloads=allow_downloads,
                     declaration_text=(
                         "I confirm that I own or have obtained all permissions "
                         "and licences needed to upload, host, stream and share "
@@ -2142,6 +2152,11 @@ def create_app():
                         "musical compositions, samples and other material it "
                         "contains. I understand that owning the DJ mix recording "
                         "alone does not automatically grant these rights."
+                        + (
+                            " The rights holder has explicitly authorised "
+                            "downloads of this mix."
+                            if allow_downloads else ""
+                        )
                     )
                 )
 
@@ -2339,22 +2354,55 @@ def create_app():
     @app.route("/dj/mixes/<int:mix_id>/edit", methods=["GET", "POST"])
     @dj_required
     def dj_edit_mix(mix_id):
-        from models import Mix, Genre
+        from models import Mix, Genre, MixRightsDeclaration
 
         mix = Mix.query.filter_by(
             id=mix_id, dj_id=current_user.id
         ).first_or_404()
 
         genres = Genre.query.order_by(Genre.name).all()
+        rights_declaration = MixRightsDeclaration.query.filter_by(
+            mix_id=mix.id
+        ).first()
+
+        has_rights_declaration = rights_declaration is not None
+        allow_downloads = bool(
+            rights_declaration and rights_declaration.allow_downloads
+        )
+        download_permission_was_enabled = allow_downloads
+
+        def render_edit():
+            return render_template(
+                "dj/edit_mix.html",
+                mix=mix,
+                genres=genres,
+                allow_downloads=allow_downloads,
+                has_rights_declaration=has_rights_declaration,
+                needs_download_confirmation=not download_permission_was_enabled
+            )
 
         if request.method == "POST":
             title = request.form.get("title", "").strip()
             description = request.form.get("description", "").strip()
             genre_value = request.form.get("genre_id", "").strip()
+            allow_downloads = request.form.get("allow_downloads") == "yes"
+            rights_confirmation = request.form.get("rights_confirmation")
+
+            if not has_rights_declaration and rights_confirmation != "yes":
+                flash("Please confirm that you have the necessary rights before saving this mix.")
+                return render_edit()
+
+            if (
+                allow_downloads
+                and not download_permission_was_enabled
+                and rights_confirmation != "yes"
+            ):
+                flash("Confirm that the rights holder has explicitly authorised downloads.")
+                return render_edit()
 
             if not title or len(title) > 180:
                 flash("Enter a valid mix title.")
-                return render_template("dj/edit_mix.html", mix=mix, genres=genres)
+                return render_edit()
 
             genre_id = None
             if genre_value:
@@ -2362,26 +2410,66 @@ def create_app():
                     genre_id = int(genre_value)
                 except ValueError:
                     flash("Invalid genre selected.")
-                    return render_template("dj/edit_mix.html", mix=mix, genres=genres)
+                    return render_edit()
 
                 if not db.session.get(Genre, genre_id):
                     flash("Selected genre does not exist.")
-                    return render_template("dj/edit_mix.html", mix=mix, genres=genres)
+                    return render_edit()
 
             mix.title = title
             mix.description = description
             mix.genre_id = genre_id
 
+            download_sentence = (
+                " The rights holder has explicitly authorised downloads "
+                "of this mix."
+            )
+
             try:
+                if rights_declaration:
+                    base_text = (
+                        rights_declaration.declaration_text or ""
+                    ).replace(download_sentence, "").strip()
+
+                    rights_declaration.allow_downloads = allow_downloads
+                    rights_declaration.confirmed_at = datetime.utcnow()
+                    rights_declaration.declaration_version = "2026-11-10-v1"
+                    rights_declaration.declaration_text = (
+                        base_text + download_sentence
+                        if allow_downloads else base_text
+                    )
+                else:
+                    declaration_text = (
+                        "I confirm that I own or have obtained all permissions "
+                        "and licences needed to upload, host, stream and share "
+                        "this mix, including rights in the sound recordings, "
+                        "musical compositions, samples and other material it "
+                        "contains. I understand that owning the DJ mix recording "
+                        "alone does not automatically grant these rights."
+                    )
+
+                    if allow_downloads:
+                        declaration_text += download_sentence
+
+                    db.session.add(MixRightsDeclaration(
+                        mix_id=mix.id,
+                        dj_id=current_user.id,
+                        confirmed_at=datetime.utcnow(),
+                        declaration_version="2026-11-10-v1",
+                        declaration_text=declaration_text,
+                        allow_downloads=allow_downloads
+                    ))
+
                 db.session.commit()
-                flash("Your mix details have been updated.")
+                flash("Your mix details and download permissions have been updated.")
                 return redirect(url_for("dj_dashboard"))
+
             except Exception:
                 db.session.rollback()
                 app.logger.exception("DJ mix edit failed")
                 flash("Could not update your mix.")
 
-        return render_template("dj/edit_mix.html", mix=mix, genres=genres)
+        return render_edit()
 
 
     @app.route("/dj/mixes/<int:mix_id>/toggle", methods=["POST"])
@@ -2846,7 +2934,7 @@ def create_app():
     @app.route("/admin/mixes/new", methods=["GET", "POST"])
     @admin_required
     def admin_upload_mix():
-        from models import Mix, Genre
+        from models import Mix, Genre, MixRightsDeclaration
 
         genres = Genre.query.order_by(Genre.name).all()
 
@@ -2856,9 +2944,15 @@ def create_app():
             audio = request.files.get("audio_file")
             cover = request.files.get("cover_image")
             genre_value = request.form.get("genre_id", "").strip()
+            rights_confirmation = request.form.get("rights_confirmation")
+            allow_downloads = request.form.get("allow_downloads") == "yes"
 
-            if not title:
-                flash("Please enter a mix title.")
+            if rights_confirmation != "yes":
+                flash("Confirm that the necessary rights have been verified before uploading.")
+                return render_template("admin/upload_mix.html", genres=genres)
+
+            if not title or len(title) > 180:
+                flash("Please enter a valid mix title.")
                 return render_template("admin/upload_mix.html", genres=genres)
 
             if not audio or not audio.filename:
@@ -2938,6 +3032,31 @@ def create_app():
                 )
 
                 db.session.add(mix)
+                db.session.flush()
+
+                declaration_text = (
+                    "Administrator confirms that the necessary rights "
+                    "and licences have been verified for uploading, hosting, "
+                    "streaming and sharing this mix, including rights in "
+                    "sound recordings, musical compositions, samples and "
+                    "other material it contains."
+                )
+
+                if allow_downloads:
+                    declaration_text += (
+                        " The rights holder has explicitly authorised "
+                        "downloads of this mix."
+                    )
+
+                db.session.add(MixRightsDeclaration(
+                    mix_id=mix.id,
+                    dj_id=current_user.id,
+                    confirmed_at=datetime.utcnow(),
+                    declaration_version="2026-11-10-admin-v1",
+                    declaration_text=declaration_text,
+                    allow_downloads=allow_downloads
+                ))
+
                 db.session.commit()
 
                 if mix.is_published:
@@ -3018,24 +3137,47 @@ def create_app():
     @app.route("/admin/mixes/<int:mix_id>/edit", methods=["GET", "POST"])
     @admin_required
     def admin_edit_mix(mix_id):
-        from models import Mix, Genre
+        from models import Mix, Genre, MixRightsDeclaration
 
         mix = db.session.get(Mix, mix_id)
         if not mix:
             abort(404)
 
         genres = Genre.query.order_by(Genre.name).all()
+        rights_declaration = MixRightsDeclaration.query.filter_by(
+            mix_id=mix.id
+        ).first()
+
+        allow_downloads = bool(
+            rights_declaration and rights_declaration.allow_downloads
+        )
+        download_permission_was_enabled = allow_downloads
+
+        def render_edit():
+            return render_template(
+                "admin/edit_mix.html",
+                mix=mix,
+                genres=genres,
+                allow_downloads=allow_downloads,
+                needs_download_confirmation=not download_permission_was_enabled
+            )
 
         if request.method == "POST":
             title = request.form.get("title", "").strip()
             description = request.form.get("description", "").strip()
             genre_value = request.form.get("genre_id", "").strip()
+            allow_downloads = request.form.get("allow_downloads") == "yes"
+            rights_confirmation = request.form.get("rights_confirmation")
+
+            if allow_downloads and not (
+                rights_declaration and rights_declaration.allow_downloads
+            ) and rights_confirmation != "yes":
+                flash("Confirm that the rights holder has explicitly authorised downloads.")
+                return render_edit()
 
             if not title:
                 flash("Mix title is required.")
-                return render_template(
-                    "admin/edit_mix.html", mix=mix, genres=genres
-                )
+                return render_edit()
 
             genre_id = None
             if genre_value:
@@ -3043,32 +3185,58 @@ def create_app():
                     genre_id = int(genre_value)
                 except ValueError:
                     flash("Invalid genre selected.")
-                    return render_template(
-                        "admin/edit_mix.html", mix=mix, genres=genres
-                    )
+                    return render_edit()
 
                 if not db.session.get(Genre, genre_id):
                     flash("Selected genre does not exist.")
-                    return render_template(
-                        "admin/edit_mix.html", mix=mix, genres=genres
-                    )
+                    return render_edit()
 
             mix.title = title
             mix.description = description
             mix.genre_id = genre_id
 
+            download_sentence = (
+                " The rights holder has explicitly authorised "
+                "downloads of this mix."
+            )
+
             try:
+                if rights_declaration:
+                    base_text = (
+                        rights_declaration.declaration_text or ""
+                    ).replace(download_sentence, "").strip()
+
+                    rights_declaration.allow_downloads = allow_downloads
+                    rights_declaration.confirmed_at = datetime.utcnow()
+                    rights_declaration.declaration_version = "2026-11-10-admin-v1"
+                    rights_declaration.declaration_text = (
+                        base_text + download_sentence
+                        if allow_downloads else base_text
+                    )
+                elif allow_downloads:
+                    db.session.add(MixRightsDeclaration(
+                        mix_id=mix.id,
+                        dj_id=mix.dj_id,
+                        confirmed_at=datetime.utcnow(),
+                        declaration_version="2026-11-10-admin-v1",
+                        declaration_text=(
+                            "Administrator records that the rights holder "
+                            "has explicitly authorised downloads of this mix."
+                        ),
+                        allow_downloads=True
+                    ))
+
                 db.session.commit()
-                flash("Mix details updated successfully.")
+                flash("Mix details and download permissions updated successfully.")
                 return redirect(url_for("admin_manage_mixes"))
+
             except Exception:
                 db.session.rollback()
                 app.logger.exception("Mix update failed")
                 flash("Could not update the mix.")
 
-        return render_template(
-            "admin/edit_mix.html", mix=mix, genres=genres
-        )
+        return render_edit()
+
 
     @app.route("/admin/mixes/<int:mix_id>/toggle", methods=["POST"])
     @admin_required

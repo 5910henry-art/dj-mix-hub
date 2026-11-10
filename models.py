@@ -90,6 +90,12 @@ class MixRightsDeclaration(db.Model):
         db.Text,
         nullable=False
     )
+    allow_downloads = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=False,
+        server_default=db.false()
+    )
 
     mix = db.relationship("Mix")
     dj = db.relationship("DJ")

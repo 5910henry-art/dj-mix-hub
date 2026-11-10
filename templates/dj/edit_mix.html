@@ -32,6 +32,32 @@ a{color:#c4a4ff;text-decoration:none}
 <option value="{{ genre.id }}" {% if mix.genre_id == genre.id %}selected{% endif %}>{{ genre.name }}</option>
 {% endfor %}
 </select>
+{% if not has_rights_declaration or needs_download_confirmation %}
+<label style="display:flex;align-items:flex-start;gap:10px;line-height:1.5">
+<input type="checkbox" name="rights_confirmation" value="yes" required
+       style="width:auto;flex:0 0 auto;margin-top:4px">
+<span>
+{% if not has_rights_declaration %}
+I confirm that I own or have obtained the necessary rights and licences
+needed to upload, host, stream and share this mix.
+{% else %}
+I confirm that the rights holder explicitly authorises listeners to
+download this mix.
+{% endif %}
+</span>
+</label>
+{% endif %}
+
+<label style="display:flex;align-items:flex-start;gap:10px;line-height:1.5">
+<input type="checkbox" name="allow_downloads" value="yes"
+       {% if allow_downloads %}checked{% endif %}
+       style="width:auto;flex:0 0 auto;margin-top:4px">
+<span>
+I explicitly authorise listeners to download this mix and confirm that
+the rights holder has authorised downloads. Leave unchecked to disable downloads.
+</span>
+</label>
+
 <button type="submit">Save Changes</button>
 </form>
 <p><a href="{{ url_for('dj_dashboard') }}">← Back to Dashboard</a></p>

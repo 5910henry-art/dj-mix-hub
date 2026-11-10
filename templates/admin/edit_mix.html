@@ -66,7 +66,27 @@
             {% endfor %}
         </select>
 
-        <button type="submit">Save Changes</button>
+                {% if needs_download_confirmation %}
+        <label style="display:flex;align-items:flex-start;gap:10px;line-height:1.5">
+            <input type="checkbox" name="rights_confirmation" value="yes"
+                   style="width:auto;flex:0 0 auto;margin-top:4px">
+            <span>
+                I have verified that the rights holder explicitly authorises
+                listeners to download this mix.
+            </span>
+        </label>
+        {% endif %}
+
+        <label style="display:flex;align-items:flex-start;gap:10px;line-height:1.5">
+            <input type="checkbox" name="allow_downloads" value="yes"
+                   {% if allow_downloads %}checked{% endif %}
+                   style="width:auto;flex:0 0 auto;margin-top:4px">
+            <span>
+                Allow listeners to download this mix. Uncheck to disable downloads.
+            </span>
+        </label>
+
+<button type="submit">Save Changes</button>
     </form>
 
     <a href="{{ url_for('admin_manage_mixes') }}">← Back to Manage Mixes</a>
