@@ -1392,3 +1392,148 @@ footer small {
         flex-basis: 215px;
     }
 }
+
+
+/* DJ YouTube directory */
+.youtube-directory-card {
+    align-items: flex-start;
+}
+
+.youtube-directory-card .youtube-content {
+    flex: 1;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+}
+
+.youtube-directory {
+    width: 100%;
+    margin-top: 22px;
+}
+
+.youtube-dj-search {
+    display: block;
+    width: 100%;
+    max-width: 460px;
+    box-sizing: border-box;
+    padding: 13px 16px;
+    margin-bottom: 18px;
+    border: 1px solid #76516f;
+    border-radius: 10px;
+    background: #160d20;
+    color: #fff;
+    font: inherit;
+    outline: none;
+}
+
+.youtube-dj-search:focus {
+    border-color: #e62117;
+    box-shadow: 0 0 0 3px #e6211725;
+}
+
+.youtube-dj-search::placeholder {
+    color: #b8aabd;
+}
+
+.youtube-dj-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.youtube-dj-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+    padding: 15px;
+    border: 1px solid #59304f;
+    border-radius: 12px;
+    background: #ffffff09;
+    color: #fff;
+    text-decoration: none;
+    transition: background .2s ease, border-color .2s ease,
+                transform .2s ease;
+}
+
+.youtube-dj-item:hover {
+    background: #e6211718;
+    border-color: #e62117;
+    transform: translateY(-2px);
+}
+
+.youtube-dj-play {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 23px;
+    border-radius: 6px;
+    background: #e62117;
+    color: #fff;
+    font-size: 13px;
+}
+
+.youtube-dj-name {
+    width: 100%;
+    overflow-wrap: anywhere;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.youtube-dj-visit {
+    color: #c5bdce;
+    font-size: 12px;
+}
+
+.youtube-dj-more {
+    display: block;
+    margin: 20px auto 0;
+    padding: 11px 24px;
+    border: 1px solid #8d668e;
+    border-radius: 9px;
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.youtube-dj-more:hover {
+    background: #ffffff12;
+}
+
+.youtube-dj-empty {
+    color: #c5bdce;
+}
+
+.youtube-dj-item[hidden],
+.youtube-dj-more[hidden],
+.youtube-dj-empty[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 950px) {
+    .youtube-dj-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .youtube-dj-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .youtube-dj-item {
+        padding: 12px;
+    }
+
+    .youtube-dj-name {
+        font-size: 13px;
+    }
+
+    .youtube-dj-search {
+        max-width: none;
+    }
+}

@@ -261,34 +261,123 @@
 
 
     <section class="section" id="youtube">
-        <div class="youtube-card">
+        <div class="youtube-card youtube-directory-card">
             <div class="youtube-content">
                 <p class="eyebrow">WATCH. LISTEN. SUBSCRIBE.</p>
                 <h2>Discover DJs on YouTube</h2>
                 <p>
                     Explore YouTube channels from DJs on DJ MIX HUB.
-                    Select a DJ below to visit their channel.
+                    Search for your favourite DJ and visit their channel.
                 </p>
 
                 {% if youtube_djs %}
-                <div class="youtube-actions">
-                    {% for youtube_dj in youtube_djs %}
-                    <a class="youtube-button"
-                       href="{{ youtube_dj.youtube_url }}"
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       aria-label="Visit {{ youtube_dj.display_name or youtube_dj.username }} on YouTube">
-                        ▶ {{ youtube_dj.display_name or youtube_dj.username }}
-                    </a>
-                    {% endfor %}
+                <div class="youtube-directory">
+                    <input
+                        type="search"
+                        id="youtubeDjSearch"
+                        class="youtube-dj-search"
+                        placeholder="Search DJ by name..."
+                        aria-label="Search DJs by name"
+                        autocomplete="off"
+                    >
+
+                    <div class="youtube-dj-grid" id="youtubeDjGrid">
+                        {% for youtube_dj in youtube_djs %}
+                        <a
+                            class="youtube-dj-item"
+                            href="{{ youtube_dj.youtube_url }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-name="{{ youtube_dj.display_name or youtube_dj.username }}"
+                            {% if loop.index > 8 %}hidden{% endif %}
+                        >
+                            <span class="youtube-dj-play">▶</span>
+                            <span class="youtube-dj-name">
+                                {{ youtube_dj.display_name or youtube_dj.username }}
+                            </span>
+                            <span class="youtube-dj-visit">Visit channel ↗</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+
+                    <p id="youtubeDjNoResults" class="youtube-dj-empty" hidden>
+                        No DJs found with that name.
+                    </p>
+
+                    {% if youtube_djs|length > 8 %}
+                    <button
+                        type="button"
+                        class="youtube-dj-more"
+                        id="youtubeDjMore"
+                        aria-expanded="false"
+                    >
+                        Show more DJs
+                    </button>
+                    {% endif %}
                 </div>
                 {% else %}
                 <p>No DJs have added their YouTube channels yet.</p>
                 {% endif %}
             </div>
+
             <div class="youtube-icon">▶</div>
         </div>
     </section>
+
+    <script>
+    (function () {
+        const search = document.getElementById("youtubeDjSearch");
+        const grid = document.getElementById("youtubeDjGrid");
+
+        if (!search || !grid) return;
+
+        const cards = Array.from(
+            grid.querySelectorAll(".youtube-dj-item")
+        );
+        const moreButton = document.getElementById("youtubeDjMore");
+        const noResults = document.getElementById("youtubeDjNoResults");
+
+        let expanded = false;
+
+        function updateDjs() {
+            const query = search.value.trim().toLowerCase();
+            let visible = 0;
+
+            cards.forEach((card, index) => {
+                const name = (card.dataset.name || "").toLowerCase();
+                const matches = name.includes(query);
+                const shouldShow = matches && (query || expanded || index < 8);
+
+                card.hidden = !shouldShow;
+
+                if (shouldShow) visible++;
+            });
+
+            if (noResults) {
+                noResults.hidden = visible !== 0;
+            }
+
+            if (moreButton) {
+                moreButton.hidden = Boolean(query);
+                moreButton.textContent = expanded
+                    ? "Show less"
+                    : "Show more DJs";
+                moreButton.setAttribute("aria-expanded", String(expanded));
+            }
+        }
+
+        search.addEventListener("input", updateDjs);
+
+        if (moreButton) {
+            moreButton.addEventListener("click", function () {
+                expanded = !expanded;
+                updateDjs();
+            });
+        }
+
+        updateDjs();
+    })();
+    </script>
 
     <section class="section" id="featured-video">
         <p class="eyebrow">FEATURED MIX</p>
