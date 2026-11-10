@@ -3,104 +3,350 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0914">
 <title>{{ dj.display_name or dj.username }} | DJ MIX HUB</title>
+
 <style>
+:root{
+    --bg:#0b0914;
+    --panel:#171326;
+    --panel2:#201a32;
+    --border:#302743;
+    --purple:#a879ff;
+    --purple2:#7545c5;
+    --muted:#aaa2bb;
+    --white:#fff;
+}
 *{box-sizing:border-box}
-body{margin:0;background:#0b0a15;color:white;font-family:Arial,sans-serif}
-header{padding:18px 5%;background:#151323;border-bottom:1px solid #302b42}
-a{color:#c4a4ff;text-decoration:none}
-header a{margin-right:20px}
-main{max-width:1100px;margin:auto;padding:30px 5%}
-.hero{display:flex;align-items:center;gap:25px;padding:28px;background:linear-gradient(120deg,#21153b,#171526);border:1px solid #6342a0;border-radius:16px}
-.avatar{width:145px;height:145px;min-width:145px;flex-shrink:0;border-radius:50%;object-fit:cover;object-position:center;background:#29213c;border:3px solid #a879ff;box-shadow:0 0 0 5px rgba(168,121,255,.13),0 8px 24px rgba(0,0,0,.35)}
-.placeholder{width:145px;height:145px;border-radius:50%;display:grid;place-items:center;background:#29213c;color:#c4a4ff;font-size:55px;flex-shrink:0}
-.bio{color:#d0c9dc;line-height:1.7;white-space:pre-line}
+body{
+    margin:0;
+    color:var(--white);
+    font-family:Arial,sans-serif;
+    background:
+        radial-gradient(ellipse at 50% -15%,#30204d 0,transparent 48%),
+        var(--bg);
+}
+a{color:inherit;text-decoration:none}
+.topbar{
+    position:sticky;top:0;z-index:10;
+    background:rgba(15,12,25,.94);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+}
+.nav{
+    max-width:1150px;margin:auto;padding:15px 24px;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:15px;
+}
+.brand{font-size:19px;font-weight:900;letter-spacing:-.5px}
+.brand span{color:var(--purple)}
+.nav-links{display:flex;align-items:center;gap:20px}
+.nav-links a{font-size:12px;color:#c9c0d8;font-weight:700}
+.nav-links a:hover{color:white}
+.nav-links .nav-book{
+    padding:10px 15px;border-radius:9px;
+    background:var(--purple2);color:white;
+}
+main{max-width:1100px;margin:auto;padding:35px 24px 65px}
+.profile{
+    position:relative;overflow:hidden;
+    display:grid;grid-template-columns:185px minmax(0,1fr);
+    gap:30px;align-items:center;
+    padding:30px;
+    border:1px solid #574078;border-radius:20px;
+    background:linear-gradient(125deg,#25183e,#191427 65%,#171326);
+    box-shadow:0 18px 55px #0005;
+}
+.profile:before{
+    content:"";position:absolute;width:300px;height:300px;
+    right:-100px;top:-180px;border-radius:50%;
+    background:#9b62ff18;pointer-events:none;
+}
+.avatar-wrap{position:relative;z-index:1}
+.avatar,.placeholder{
+    width:175px;height:175px;border-radius:50%;
+    border:4px solid #a879ff;object-fit:cover;
+    background:#29213c;
+    box-shadow:0 0 0 7px #a879ff19,0 12px 35px #0007;
+}
+.placeholder{
+    display:grid;place-items:center;
+    font-size:65px;color:#c4a4ff;
+}
+.profile-info{position:relative;z-index:1;min-width:0}
+.eyebrow{
+    display:inline-flex;align-items:center;gap:7px;
+    color:#c9aaff;background:#a879ff19;
+    border:1px solid #a879ff40;border-radius:30px;
+    padding:7px 11px;font-size:10px;font-weight:800;
+    letter-spacing:1.2px;text-transform:uppercase;
+}
+h1{
+    margin:13px 0 9px;
+    font-size:clamp(29px,5vw,43px);
+    line-height:1.12;letter-spacing:-1.2px;
+    overflow-wrap:anywhere;
+}
+.bio{
+    max-width:680px;color:#c6bdd4;
+    font-size:14px;line-height:1.8;
+    white-space:pre-line;margin:0;
+}
+.profile-stats{
+    display:flex;gap:10px;flex-wrap:wrap;margin-top:19px;
+}
+.stat{
+    padding:10px 13px;border-radius:10px;
+    background:#ffffff09;border:1px solid #ffffff14;
+    color:#e8e0f3;font-size:12px;
+}
+.stat strong{color:white;font-size:15px;margin-right:4px}
+.profile-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:21px}
+.btn{
+    display:inline-flex;align-items:center;justify-content:center;
+    gap:8px;padding:12px 17px;border-radius:10px;
+    font-size:12px;font-weight:800;transition:.2s;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.12)}
+.btn-primary{
+    color:white;background:linear-gradient(120deg,#9660ed,#7040bd);
+    box-shadow:0 7px 20px #7545c544;
+}
+.btn-secondary{
+    background:#ffffff0d;border:1px solid #ffffff20;color:#eee5fa;
+}
+.social-links{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}
+.social-links a{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:9px 12px;border-radius:8px;
+    font-size:11px;font-weight:800;color:white;
+    transition:transform .2s,opacity .2s;
+}
+.social-links a:hover{transform:translateY(-2px);opacity:.88}
+.youtube{background:#c52222}
+.instagram{background:linear-gradient(45deg,#833ab4,#fd1d1d,#fcb045)}
+.tiktok{background:#111;border:1px solid #444}
+.facebook{background:#1877f2}
 
-.social-links{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
-.social-links a{display:inline-flex;align-items:center;gap:8px;padding:11px 15px;border-radius:9px;background:#30254b;color:white;font-weight:bold;transition:transform .2s,opacity .2s}
-.social-links a:hover{transform:translateY(-3px);opacity:.85}
-.social-links .youtube{background:#c52222}
-.social-links .instagram{background:linear-gradient(45deg,#833ab4,#fd1d1d,#fcb045)}
-.social-links .tiktok{background:#111;border:1px solid #444}
-.social-links .facebook{background:#1877f2}
+.section-head{
+    display:flex;justify-content:space-between;align-items:end;
+    gap:12px;margin:39px 0 17px;
+}
+.section-head h2{font-size:21px;margin:0;letter-spacing:-.4px}
+.section-head p{margin:6px 0 0;color:var(--muted);font-size:12px}
+.section-count{
+    color:#c9aaff;background:#a879ff16;
+    border:1px solid #a879ff35;border-radius:30px;
+    padding:7px 11px;font-size:11px;font-weight:800;
+    white-space:nowrap;
+}
+.mix-grid{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:17px;
+}
+.mix-card{
+    min-width:0;overflow:hidden;
+    background:linear-gradient(155deg,#1d1830,#14111f);
+    border:1px solid var(--border);border-radius:15px;
+    transition:transform .2s,border-color .2s,box-shadow .2s;
+}
+.mix-card:hover{
+    transform:translateY(-4px);border-color:#7955ae;
+    box-shadow:0 12px 30px #0004;
+}
+.cover-wrap{position:relative;overflow:hidden;background:#29213c}
+.cover{
+    display:block;width:100%;height:175px;
+    object-fit:cover;transition:transform .35s;
+}
+.mix-card:hover .cover{transform:scale(1.04)}
+.cover-placeholder{
+    height:175px;display:grid;place-items:center;
+    font-size:43px;color:#a879ff;
+    background:linear-gradient(135deg,#30204c,#171326);
+}
+.mix-content{padding:15px}
+.mix-content h3{
+    margin:0 0 9px;font-size:15px;line-height:1.4;
+    overflow-wrap:anywhere;
+}
+.mix-meta{
+    display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+    color:var(--muted);font-size:11px;margin-bottom:15px;
+}
+.mix-meta .dot{color:#7655a6}
+.mix-actions{display:flex;gap:8px}
+.mix-actions a{
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:9px 12px;border-radius:8px;
+    background:#30254b;color:#eee4ff;
+    font-size:11px;font-weight:800;flex:1;
+    transition:background .2s;
+}
+.mix-actions a:hover{background:#523879}
+.mix-actions .listen{background:var(--purple2);color:white}
+.empty{
+    grid-column:1/-1;text-align:center;
+    padding:45px 20px;background:var(--panel);
+    border:1px dashed #514264;border-radius:15px;
+    color:var(--muted);
+}
+.empty-icon{font-size:38px;margin-bottom:12px}
+.empty strong{display:block;color:white;font-size:16px;margin-bottom:7px}
+footer{
+    border-top:1px solid var(--border);
+    padding:23px;text-align:center;
+    color:#81778f;font-size:11px;
+}
+footer span{color:#c4a4ff;font-weight:800}
 
-h1{font-size:clamp(26px,5vw,40px);margin:0 0 10px}
-h2{margin-top:35px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
-.card{overflow:hidden;background:#171526;border:1px solid #302b42;border-radius:13px}
-.cover{width:100%;height:160px;object-fit:cover;background:#29213c}
-.card-content{padding:16px}
-.card p{color:#aaa6bd}
-.actions{display:flex;gap:12px;flex-wrap:wrap}
-.actions a{display:inline-block;padding:10px 13px;border-radius:7px;background:#30254b}
-.empty{padding:22px;background:#171526;border-radius:12px;color:#aaa6bd}
-@media(max-width:600px){.hero{flex-direction:column;text-align:center}.avatar,.placeholder{width:125px;height:125px;min-width:125px}}
+@media(max-width:800px){
+    .profile{grid-template-columns:140px minmax(0,1fr);gap:23px;padding:24px}
+    .avatar,.placeholder{width:135px;height:135px}
+    .mix-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+    .nav{padding:13px 15px}
+    .brand{font-size:17px}
+    .nav-links{gap:12px}
+    .nav-links a{font-size:11px}
+    .nav-links .nav-book{padding:9px 11px}
+    main{padding:22px 14px 45px}
+    .profile{grid-template-columns:1fr;text-align:center;padding:25px 18px;gap:16px}
+    .avatar-wrap{display:flex;justify-content:center}
+    .avatar,.placeholder{width:125px;height:125px}
+    .profile-info{display:flex;flex-direction:column;align-items:center}
+    .bio{font-size:13px}
+    .profile-stats,.profile-actions,.social-links{justify-content:center}
+    .section-head{margin-top:30px}
+    .section-head h2{font-size:18px}
+    .mix-grid{gap:11px}
+    .cover,.cover-placeholder{height:135px}
+    .mix-content{padding:11px}
+    .mix-content h3{font-size:13px}
+    .mix-actions{gap:6px}
+    .mix-actions a{padding:9px 7px;font-size:10px}
+}
+@media(max-width:370px){
+    .nav-links{gap:8px}
+    .nav-links a{font-size:10px}
+    .mix-grid{grid-template-columns:1fr}
+    .cover,.cover-placeholder{height:190px}
+}
 </style>
 </head>
+
 <body>
-<header>
-<a href="/">🎧 DJ MIX HUB</a>
-<a href="{{ url_for('public_dj_directory') }}">← All DJs</a>
-<a href="{{ url_for("public_booking", dj_id=dj.id) }}">Book this DJ</a>
+<header class="topbar">
+    <nav class="nav">
+        <a class="brand" href="/">🎧 DJ MIX <span>HUB</span></a>
+        <div class="nav-links">
+            <a href="{{ url_for('public_dj_directory') }}">← All DJs</a>
+            <a class="nav-book" href="{{ url_for('public_booking', dj_id=dj.id) }}">Book this DJ</a>
+        </div>
+    </nav>
 </header>
+
 <main>
-<section class="hero">
-{% if dj.profile_image %}
-<img class="avatar" src="{{ url_for('uploaded_file', filename=dj.profile_image) }}" alt="{{ dj.display_name or dj.username }}">
-{% else %}
-<div class="placeholder">🎧</div>
-{% endif %}
-<div>
-<h1>{{ dj.display_name or dj.username }}</h1>
-<p class="bio">{{ dj.bio or 'Welcome to this DJ profile. Explore the latest mixes below.' }}</p>
-<p>{{ mixes|length }} published mix{{ '' if mixes|length == 1 else 'es' }}</p>
-<div class="actions" style="margin-top:18px">
-<a href="{{ url_for('public_booking', dj_id=dj.id) }}">🎧 Book {{ dj.display_name or dj.username }}</a>
-</div>
+    <section class="profile">
+        <div class="avatar-wrap">
+            {% if dj.profile_image %}
+            <img class="avatar"
+                 src="{{ url_for('uploaded_file', filename=dj.profile_image) }}"
+                 alt="{{ dj.display_name or dj.username }}">
+            {% else %}
+            <div class="placeholder">🎧</div>
+            {% endif %}
+        </div>
 
-{% if dj.youtube_url or dj.instagram_url or dj.tiktok_url or dj.facebook_url %}
-<div class="social-links">
-{% if dj.youtube_url %}
-<a class="youtube" href="{{ dj.youtube_url }}" target="_blank" rel="noopener noreferrer">▶ YouTube</a>
-{% endif %}
-{% if dj.instagram_url %}
-<a class="instagram" href="{{ dj.instagram_url }}" target="_blank" rel="noopener noreferrer">◎ Instagram</a>
-{% endif %}
-{% if dj.tiktok_url %}
-<a class="tiktok" href="{{ dj.tiktok_url }}" target="_blank" rel="noopener noreferrer">♪ TikTok</a>
-{% endif %}
-{% if dj.facebook_url %}
-<a class="facebook" href="{{ dj.facebook_url }}" target="_blank" rel="noopener noreferrer">f Facebook</a>
-{% endif %}
-</div>
-{% endif %}
-</div>
-</section>
+        <div class="profile-info">
+            <span class="eyebrow">🎧 DJ MIX HUB ARTIST</span>
+            <h1>{{ dj.display_name or dj.username }}</h1>
+            <p class="bio">{{ dj.bio or 'Welcome to this DJ profile. Explore the latest mixes below.' }}</p>
 
-<h2>🎵 Mixes by {{ dj.display_name or dj.username }}</h2>
-<div class="grid">
-{% for mix in mixes %}
-<article class="card">
-{% if mix.cover_image %}
-<img class="cover" src="{{ url_for('uploaded_file', filename=mix.cover_image) }}" alt="{{ mix.title }}">
-{% else %}
-<div class="cover"></div>
-{% endif %}
-<div class="card-content">
-<h3>{{ mix.title }}</h3>
-<p>{{ mix.genre.name if mix.genre else 'Uncategorized' }} · {{ mix.plays }} plays</p>
-<div class="actions">
-<a href="{{ url_for('mix_detail', mix_id=mix.id) }}">Listen</a>
-{% if mix.rights_declaration and mix.rights_declaration.allow_downloads %}
-<a href="{{ url_for('download_mix', mix_id=mix.id) }}">Download</a>
-{% endif %}
-</div>
-</div>
-</article>
-{% else %}
-<div class="empty">This DJ has no published mixes yet.</div>
-{% endfor %}
-</div>
+            <div class="profile-stats">
+                <div class="stat"><strong>{{ mixes|length }}</strong> Published Mix{{ '' if mixes|length == 1 else 'es' }}</div>
+            </div>
+
+            <div class="profile-actions">
+                <a class="btn btn-primary" href="{{ url_for('public_booking', dj_id=dj.id) }}">
+                    🎧 Book {{ dj.display_name or dj.username }}
+                </a>
+                <a class="btn btn-secondary" href="{{ url_for('public_dj_directory') }}">
+                    Explore DJs
+                </a>
+            </div>
+
+            {% if dj.youtube_url or dj.instagram_url or dj.tiktok_url or dj.facebook_url %}
+            <div class="social-links">
+                {% if dj.youtube_url %}
+                <a class="youtube" href="{{ dj.youtube_url }}" target="_blank" rel="noopener noreferrer">▶ YouTube</a>
+                {% endif %}
+                {% if dj.instagram_url %}
+                <a class="instagram" href="{{ dj.instagram_url }}" target="_blank" rel="noopener noreferrer">◎ Instagram</a>
+                {% endif %}
+                {% if dj.tiktok_url %}
+                <a class="tiktok" href="{{ dj.tiktok_url }}" target="_blank" rel="noopener noreferrer">♪ TikTok</a>
+                {% endif %}
+                {% if dj.facebook_url %}
+                <a class="facebook" href="{{ dj.facebook_url }}" target="_blank" rel="noopener noreferrer">f Facebook</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="mix-section">
+        <div class="section-head">
+            <div>
+                <h2>🎵 Mixes by {{ dj.display_name or dj.username }}</h2>
+                <p>Listen to the latest sounds from this DJ</p>
+            </div>
+            <span class="section-count">{{ mixes|length }} MIXES</span>
+        </div>
+
+        <div class="mix-grid">
+            {% for mix in mixes %}
+            <article class="mix-card">
+                <div class="cover-wrap">
+                    {% if mix.cover_image %}
+                    <img class="cover"
+                         src="{{ url_for('uploaded_file', filename=mix.cover_image) }}"
+                         alt="{{ mix.title }}">
+                    {% else %}
+                    <div class="cover-placeholder">🎵</div>
+                    {% endif %}
+                </div>
+
+                <div class="mix-content">
+                    <h3>{{ mix.title }}</h3>
+                    <div class="mix-meta">
+                        <span>{{ mix.genre.name if mix.genre else 'Uncategorized' }}</span>
+                        <span class="dot">•</span>
+                        <span>▶ {{ mix.plays }} plays</span>
+                    </div>
+
+                    <div class="mix-actions">
+                        <a class="listen" href="{{ url_for('mix_detail', mix_id=mix.id) }}">▶ Listen</a>
+                        {% if mix.rights_declaration and mix.rights_declaration.allow_downloads %}
+                        <a href="{{ url_for('download_mix', mix_id=mix.id) }}">↓ Download</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+            {% else %}
+            <div class="empty">
+                <div class="empty-icon">🎧</div>
+                <strong>No published mixes yet</strong>
+                This DJ hasn't uploaded any public mixes. Please check back later.
+            </div>
+            {% endfor %}
+        </div>
+    </section>
 </main>
+
+<footer>
+    Powered by <span>DJ MIX HUB</span> · Discover music. Discover DJs.
+</footer>
 </body>
 </html>
