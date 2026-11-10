@@ -1219,3 +1219,59 @@ footer small {
         grid-template-columns: 72px minmax(0, 1fr);
     }
 }
+
+
+/* Wider balanced homepage mix cards - v3 */
+#latest .mix-card {
+    flex: 0 0 48%;
+    grid-template-columns: 105px minmax(0, 1fr);
+    border-radius: 12px;
+}
+
+#latest .cover-art {
+    min-height: 150px;
+}
+
+#latest .mix-info {
+    padding: 10px;
+}
+
+#latest .mix-info h3 {
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+#latest .dj-name {
+    font-size: 11px;
+}
+
+#latest .mix-stats {
+    margin: 7px 0;
+    font-size: 10px;
+}
+
+#latest .mix-info audio {
+    height: 30px;
+}
+
+#latest .download-button {
+    padding: 6px 8px;
+    font-size: 11px;
+}
+
+@media (max-width: 700px) {
+    #latest .mix-card {
+        flex: 0 0 100%;
+        grid-template-columns: 105px minmax(0, 1fr);
+    }
+
+    #latest .cover-art {
+        min-height: 145px;
+    }
+}
+
+@media (max-width: 380px) {
+    #latest .mix-card {
+        grid-template-columns: 90px minmax(0, 1fr);
+    }
+}
