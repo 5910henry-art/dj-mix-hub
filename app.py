@@ -1438,10 +1438,12 @@ def create_app():
 
         genres = Genre.query.order_by(Genre.name).all()
 
-        # Show YouTube channels belonging to approved public DJs only.
+        # Show YouTube channels belonging to admins and approved public DJs.
         youtube_djs = DJ.query.filter(
-            DJ.is_admin.is_(False),
-            DJ.is_approved.is_(True),
+            or_(
+                DJ.is_admin.is_(True),
+                DJ.is_approved.is_(True)
+            ),
             DJ.youtube_url.isnot(None),
             DJ.youtube_url != ""
         ).order_by(
