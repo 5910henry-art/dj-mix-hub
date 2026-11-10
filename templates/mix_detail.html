@@ -92,10 +92,12 @@
                     Your browser does not support audio playback.
                 </audio>
 
+                {% if mix.rights_declaration and mix.rights_declaration.allow_downloads %}
                 <a class="download-button"
                    href="{{ url_for('download_mix', mix_id=mix.id) }}">
                     ↓ Download Mix
                 </a>
+                {% endif %}
 
                 {% if listener %}
                     <form action="{{ url_for('toggle_favorite', mix_id=mix.id) }}"

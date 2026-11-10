@@ -114,10 +114,12 @@
                                 Listen
                             </a>
 
+                            {% if mix.rights_declaration and mix.rights_declaration.allow_downloads %}
                             <a class="download-btn"
                                href="{{ url_for('download_mix', mix_id=mix.id) }}">
                                 Download
                             </a>
+                            {% endif %}
 
                             <form action="{{ url_for('toggle_favorite', mix_id=mix.id) }}"
                                   method="POST">

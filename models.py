@@ -54,6 +54,14 @@ class Mix(db.Model):
 
     dj = db.relationship("DJ", back_populates="mixes")
     genre = db.relationship("Genre", back_populates="mixes")
+    rights_declaration = db.relationship(
+        "MixRightsDeclaration",
+        back_populates="mix",
+        uselist=False,
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
 
     __table_args__ = (
         Index("ix_mixes_created_at", "created_at"),
@@ -97,7 +105,7 @@ class MixRightsDeclaration(db.Model):
         server_default=db.false()
     )
 
-    mix = db.relationship("Mix")
+    mix = db.relationship("Mix", back_populates="rights_declaration")
     dj = db.relationship("DJ")
 
 

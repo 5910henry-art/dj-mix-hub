@@ -91,7 +91,9 @@ h2{margin-top:35px}
 <p>{{ mix.genre.name if mix.genre else 'Uncategorized' }} · {{ mix.plays }} plays</p>
 <div class="actions">
 <a href="{{ url_for('mix_detail', mix_id=mix.id) }}">Listen</a>
+{% if mix.rights_declaration and mix.rights_declaration.allow_downloads %}
 <a href="{{ url_for('download_mix', mix_id=mix.id) }}">Download</a>
+{% endif %}
 </div>
 </div>
 </article>
