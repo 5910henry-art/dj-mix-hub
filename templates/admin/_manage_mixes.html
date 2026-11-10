@@ -1,20 +1,5 @@
 <section id="admin-mix-management" aria-live="polite">
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <span>Total mixes</span>
-            <strong>{{ stats.total }}</strong>
-        </div>
-        <div class="stat-card">
-            <span>Published</span>
-            <strong>{{ stats.published }}</strong>
-        </div>
-        <div class="stat-card">
-            <span>Unpublished</span>
-            <strong>{{ stats.drafts }}</strong>
-        </div>
-    </div>
-
     <form method="GET"
           action="{{ url_for('admin_manage_mixes') }}"
           class="filters admin-mix-tools">
