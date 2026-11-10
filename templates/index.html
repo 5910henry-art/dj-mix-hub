@@ -264,23 +264,27 @@
         <div class="youtube-card">
             <div class="youtube-content">
                 <p class="eyebrow">WATCH. LISTEN. SUBSCRIBE.</p>
-                <h2>DJ Jitiasque Unique</h2>
+                <h2>Discover DJs on YouTube</h2>
                 <p>
-                    Experience more music, exclusive DJ mixes and
-                    entertainment on my official YouTube channel.
+                    Explore YouTube channels from DJs on DJ MIX HUB.
+                    Select a DJ below to visit their channel.
                 </p>
+
+                {% if youtube_djs %}
                 <div class="youtube-actions">
+                    {% for youtube_dj in youtube_djs %}
                     <a class="youtube-button"
-                       href="https://www.youtube.com/@deejayjitiasqueunique9895?sub_confirmation=1"
-                       target="_blank" rel="noopener noreferrer">
-                        ▶ Subscribe on YouTube
+                       href="{{ youtube_dj.youtube_url }}"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       aria-label="Visit {{ youtube_dj.display_name or youtube_dj.username }} on YouTube">
+                        ▶ {{ youtube_dj.display_name or youtube_dj.username }}
                     </a>
-                    <a class="youtube-secondary"
-                       href="https://www.youtube.com/@deejayjitiasqueunique9895/videos"
-                       target="_blank" rel="noopener noreferrer">
-                        Explore Videos →
-                    </a>
+                    {% endfor %}
                 </div>
+                {% else %}
+                <p>No DJs have added their YouTube channels yet.</p>
+                {% endif %}
             </div>
             <div class="youtube-icon">▶</div>
         </div>

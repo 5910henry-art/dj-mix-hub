@@ -1438,6 +1438,17 @@ def create_app():
 
         genres = Genre.query.order_by(Genre.name).all()
 
+        # Show YouTube channels belonging to approved public DJs only.
+        youtube_djs = DJ.query.filter(
+            DJ.is_admin.is_(False),
+            DJ.is_approved.is_(True),
+            DJ.youtube_url.isnot(None),
+            DJ.youtube_url != ""
+        ).order_by(
+            DJ.display_name.asc(),
+            DJ.username.asc()
+        ).all()
+
         public_listeners = [
             {
                 "username": item.username,
@@ -1477,6 +1488,7 @@ def create_app():
             "index.html",
             mixes=mixes,
             genres=genres,
+            youtube_djs=youtube_djs,
             search=search,
             selected_genre=genre_id,
             ads=ads,
