@@ -4,121 +4,264 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#101018">
-    <title>Waking up | DJ MIX HUB</title>
+    <meta name="description" content="DJ MIX HUB — Discover your sound. Explore DJ mixes, fresh sounds and music for every mood.">
+    <title>Discover Your Sound | DJ MIX HUB</title>
+
     <style>
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
         body {
             margin: 0;
             min-height: 100vh;
-            display: grid;
-            place-items: center;
-            padding: 24px;
-            background: #101018;
+            padding: 30px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background:
+                radial-gradient(ellipse at top, #302044 0%, #171322 40%, #101018 80%);
             color: #fff;
             font-family: Arial, sans-serif;
             text-align: center;
         }
 
-        main { max-width: 420px; width: 100%; }
-
-        .logo {
-            font-size: 25px;
-            font-weight: 800;
-            letter-spacing: 1px;
+        main {
+            width: 100%;
+            max-width: 460px;
         }
 
-        .logo span { color: #c084fc; }
+        .logo {
+            font-size: 29px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            margin-bottom: 32px;
+        }
+
+        .logo span {
+            color: #c084fc;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 8px 15px;
+            border: 1px solid #7543a5;
+            border-radius: 30px;
+            color: #d8b4fe;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 18px;
+        }
+
+        h1 {
+            font-size: clamp(30px, 8vw, 42px);
+            line-height: 1.15;
+            margin: 0 0 16px;
+        }
+
+        h1 span {
+            color: #c084fc;
+        }
+
+        .intro {
+            color: #c5c0cf;
+            line-height: 1.8;
+            font-size: 16px;
+            margin-bottom: 25px;
+        }
+
+        .music-art {
+            min-height: 175px;
+            border-radius: 20px;
+            margin: 25px 0;
+            padding: 25px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            background:
+                linear-gradient(135deg, #42235e, #21172f 55%, #14121e);
+            border: 1px solid #55346f;
+            box-shadow: 0 15px 40px #0005;
+        }
+
+        .headphones {
+            font-size: 58px;
+            margin-bottom: 12px;
+        }
+
+        .music-art strong {
+            font-size: 20px;
+        }
+
+        .music-art small {
+            color: #d0b1ee;
+            margin-top: 8px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 25px 0;
+        }
+
+        .feature {
+            background: #211b2c;
+            border: 1px solid #3d2b50;
+            border-radius: 13px;
+            padding: 16px 7px;
+        }
+
+        .feature .icon {
+            display: block;
+            font-size: 25px;
+            margin-bottom: 9px;
+        }
+
+        .feature strong {
+            font-size: 12px;
+            color: #e9d5ff;
+        }
+
+        .message {
+            color: #d8b4fe;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 20px 0;
+        }
 
         .loader {
-            width: 48px;
-            height: 48px;
-            margin: 35px auto 25px;
-            border: 4px solid #343444;
+            width: 27px;
+            height: 27px;
+            border: 3px solid #49365d;
             border-top-color: #c084fc;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        h1 {
-            color: #c084fc;
-            font-size: 23px;
-        }
-
-        p {
-            color: #bbb;
-            line-height: 1.7;
-        }
-
-        #status {
-            color: #d8b4fe;
-            font-size: 14px;
-        }
-
         button {
-            margin-top: 18px;
-            padding: 12px 24px;
+            width: 100%;
+            max-width: 260px;
+            padding: 16px 25px;
             border: 0;
-            border-radius: 9px;
-            background: #8b5cf6;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
             color: white;
+            font-size: 16px;
             font-weight: bold;
-            font-size: 15px;
             cursor: pointer;
+            box-shadow: 0 8px 25px #8b5cf655;
+        }
+
+        button:active {
+            transform: scale(.98);
+        }
+
+        footer {
+            color: #81788e;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 350px) {
+            .feature strong {
+                font-size: 10px;
+            }
         }
     </style>
 </head>
+
 <body>
     <main>
         <div class="logo">🎧 DJ MIX <span>HUB</span></div>
-        <div class="loader"></div>
 
-        <h1>Waking up DJ MIX HUB...</h1>
+        <div class="tag">DISCOVER YOUR SOUND</div>
 
-        <p>
-            Our music platform is starting up.
-            Please wait while we reconnect you.
+        <h1>Your Music.<br><span>Your Vibe.</span></h1>
+
+        <p class="intro">
+            Welcome to DJ MIX HUB — your destination for amazing
+            DJ mixes, fresh sounds and music for every mood.
+            Discover something new and let the music move you.
         </p>
 
-        <p id="status">Connecting to the server...</p>
+        <section class="music-art">
+            <div class="headphones">🎧</div>
+            <strong>Explore. Listen. Enjoy.</strong>
+            <small>Your next favourite mix awaits.</small>
+        </section>
 
-        <button onclick="checkServer()">Try again</button>
+        <section class="features">
+            <div class="feature">
+                <span class="icon">🎵</span>
+                <strong>Great Mixes</strong>
+            </div>
+
+            <div class="feature">
+                <span class="icon">🎧</span>
+                <strong>Discover DJs</strong>
+            </div>
+
+            <div class="feature">
+                <span class="icon">🔥</span>
+                <strong>Fresh Sounds</strong>
+            </div>
+        </section>
+
+        <div class="message">
+            <div class="loader"></div>
+            <span id="status">
+                Getting your music experience ready...
+            </span>
+        </div>
+
+        <button onclick="checkServer()">
+            Enter DJ MIX HUB →
+        </button>
+
+        <footer>
+            DJ MIX HUB · Discover Your Sound
+        </footer>
     </main>
 
     <script>
         let checking = false;
-        let attempts = 0;
 
         async function checkServer() {
             if (checking) return;
 
             checking = true;
+
             const status = document.getElementById("status");
+            const button = document.querySelector("button");
+
+            button.textContent = "Preparing your experience...";
+
+            let timeout;
 
             try {
                 const controller = new AbortController();
-                const timeout = setTimeout(
+
+                timeout = setTimeout(
                     () => controller.abort(),
                     8000
                 );
 
-                const response = await fetch(
-                    "/health",
-                    {
-                        method: "GET",
-                        cache: "no-store",
-                        signal: controller.signal
-                    }
-                );
-
-                clearTimeout(timeout);
+                const response = await fetch("/health", {
+                    method: "GET",
+                    cache: "no-store",
+                    signal: controller.signal
+                });
 
                 if (!response.ok) {
-                    throw new Error("Server is still starting");
+                    throw new Error("Not ready");
                 }
 
                 const data = await response.json();
@@ -127,7 +270,10 @@
                     data.status === "ok" &&
                     data.database === "connected"
                 ) {
-                    status.textContent = "Connected! Opening DJ MIX HUB...";
+                    status.textContent =
+                        "Your music experience is ready!";
+
+                    button.textContent = "Opening DJ MIX HUB...";
 
                     setTimeout(() => {
                         window.location.reload();
@@ -136,19 +282,20 @@
                     return;
                 }
 
-                throw new Error("Database is not ready");
+                throw new Error("Not ready");
 
             } catch (error) {
-                attempts++;
-
                 status.textContent =
-                    "Still waking up... Checking again shortly.";
+                    "Discover amazing sounds and enjoy your music journey.";
+
+                button.textContent = "Enter DJ MIX HUB →";
 
             } finally {
+                clearTimeout(timeout);
                 checking = false;
             }
 
-            setTimeout(checkServer, 4000);
+            setTimeout(checkServer, 5000);
         }
 
         checkServer();
