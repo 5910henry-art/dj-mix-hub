@@ -3189,9 +3189,9 @@ def create_app():
             )
 
         if status == "published":
-            query = query.filter_by(is_published=True)
+            query = query.filter(Mix.is_published.is_(True))
         elif status == "draft":
-            query = query.filter_by(is_published=False)
+            query = query.filter(Mix.is_published.is_(False))
 
         mixes = query.order_by(Mix.created_at.desc()).all()
         genres = Genre.query.order_by(Genre.name).all()
